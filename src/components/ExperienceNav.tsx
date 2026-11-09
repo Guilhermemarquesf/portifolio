@@ -249,7 +249,7 @@ export const ExperienceNav: React.FC<ExperienceNavProps> = ({
             className={`p-1.5 sm:px-2 sm:py-1 text-xs rounded-md border transition-all shrink-0 flex items-center gap-1 ${
               currentTheme === 'light'
                 ? 'bg-amber-400 text-black border-amber-300 font-semibold'
-                : 'bg-white/5 hover:bg-white/10 border-white/10 text-white/80 hover:text-white'
+                : 'bg-white/5 hover:bg-black/10 border-white/10 text-black/80 hover:text-black'
             }`}
           >
             {currentTheme === 'light' ? (
