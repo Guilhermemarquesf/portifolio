@@ -1,0 +1,205 @@
+@import "tailwindcss";
+
+@custom-variant dark (&:where(.dark, .dark *));
+
+@layer base {
+  html {
+    font-family: 'Plus Jakarta Sans', system-ui, -apple-system, sans-serif;
+    scroll-behavior: smooth;
+  }
+
+  /* Estilo minimalista, limpo e com tipografia espaçada para h3 */
+  h3 {
+    text-shadow: none !important;
+    letter-spacing: 0.025em;
+  }
+}
+
+.font-serif-luxury {
+  font-family: 'Cormorant Garamond', Georgia, serif;
+}
+
+.font-display-serif {
+  font-family: 'Playfair Display', 'Cormorant Garamond', Georgia, serif;
+}
+
+.font-cinzel {
+  font-family: 'Cinzel', Georgia, serif;
+}
+
+.font-sport {
+  font-family: 'Oswald', system-ui, sans-serif;
+}
+
+.font-code {
+  font-family: 'JetBrains Mono', monospace;
+}
+
+.text-gold-gradient {
+  background: linear-gradient(135deg, #f7e6b8 0%, #d4af37 40%, #b8912e 75%, #8c6a1e 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+
+/* Custom scrollbars */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, 0.15);
+  border-radius: 9999px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: rgba(255, 255, 255, 0.3);
+}
+
+/* ==========================================================================
+   ACESSIBILIDADE: ESCALA DE FONTES
+   ========================================================================== */
+html.font-size-large {
+  font-size: 112%;
+}
+html.font-size-larger {
+  font-size: 125%;
+}
+
+/* ==========================================================================
+   ACESSIBILIDADE: MODO DE ALTO CONTRASTE (WCAG AAA)
+   ========================================================================== */
+html.high-contrast {
+  color-scheme: dark;
+}
+html.high-contrast body {
+  background-color: #000000 !important;
+  color: #ffffff !important;
+}
+html.high-contrast [class*="border-"] {
+  border-color: #ffffff !important;
+  border-width: 2px !important;
+}
+html.high-contrast button:focus-visible,
+html.high-contrast a:focus-visible,
+html.high-contrast input:focus-visible {
+  outline: 3px solid #facc15 !important;
+  outline-offset: 3px !important;
+}
+html.high-contrast [class*="text-neutral-"],
+html.high-contrast [class*="text-slate-"],
+html.high-contrast [class*="text-[#"] {
+  color: #f8fafc !important;
+  opacity: 1 !important;
+}
+html.high-contrast [class*="text-[#d4af37]"],
+html.high-contrast .text-amber-400,
+html.high-contrast .text-yellow-500 {
+  color: #ffd700 !important;
+  font-weight: 700 !important;
+}
+html.high-contrast .text-emerald-400,
+html.high-contrast .text-emerald-500 {
+  color: #4ade80 !important;
+  font-weight: 700 !important;
+}
+html.high-contrast .text-indigo-400,
+html.high-contrast .text-indigo-300 {
+  color: #a5b4fc !important;
+  font-weight: 700 !important;
+}
+html.high-contrast [class*="bg-[#1"],
+html.high-contrast [class*="bg-[#0"],
+html.high-contrast [class*="bg-neutral-9"],
+html.high-contrast [class*="bg-slate-9"] {
+  background-color: #000000 !important;
+}
+
+/* ==========================================================================
+   TEMA: MODO CLARO (LIGHT THEME)
+   ========================================================================== */
+html.light {
+  color-scheme: light;
+}
+html.light body {
+  background-color: #f8fafc !important;
+  color: #0f172a !important;
+}
+html.light .bg-\[\#060606\],
+html.light .bg-\[\#050505\],
+html.light .bg-\[\#080808\],
+html.light .bg-\[\#110c08\],
+html.light .bg-\[\#0b1120\],
+html.light .bg-\[\#0e0c0a\],
+html.light .bg-\[\#0d0906\] {
+  background-color: #f8fafc !important;
+  color: #0f172a !important;
+}
+html.light [class*="bg-[#1a120b]"],
+html.light [class*="bg-[#1b120a]"],
+html.light [class*="bg-[#1e140c]"],
+html.light [class*="bg-[#170f09]"],
+html.light [class*="bg-[#17100a]"],
+html.light [class*="bg-[#18110b]"],
+html.light [class*="bg-[#140e09]"],
+html.light [class*="bg-neutral-900"],
+html.light [class*="bg-neutral-950"],
+html.light [class*="bg-slate-900"],
+html.light [class*="bg-slate-950"],
+html.light [class*="bg-[#0d1527]"] {
+  background-color: #ffffff !important;
+  box-shadow: 0 4px 18px -2px rgba(15, 23, 42, 0.06);
+}
+html.light [class*="border-[#"],
+html.light [class*="border-neutral-8"],
+html.light [class*="border-neutral-7"],
+html.light [class*="border-slate-8"],
+html.light [class*="border-slate-7"] {
+  border-color: #e2e8f0 !important;
+}
+html.light .text-white,
+html.light .text-\[\#f7f2ea\],
+html.light .text-\[\#f6f1ea\] {
+  color: #0f172a !important;
+}
+html.light .text-neutral-300,
+html.light .text-slate-300,
+html.light .text-\[\#cfc2b2\],
+html.light .text-\[\#dfd5c7\],
+html.light .text-\[\#ded2c3\] {
+  color: #334155 !important;
+}
+html.light .text-neutral-400,
+html.light .text-slate-400,
+html.light .text-\[\#a38f7d\],
+html.light .text-\[\#a89584\] {
+  color: #64748b !important;
+}
+html.light header {
+  background-color: rgba(255, 255, 255, 0.94) !important;
+  border-color: #e2e8f0 !important;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.04);
+}
+html.light footer {
+  background-color: rgba(255, 255, 255, 0.96) !important;
+  border-color: #e2e8f0 !important;
+  box-shadow: 0 -4px 20px rgba(0, 0, 0, 0.06) !important;
+}
+html.light footer .text-white\/90 {
+  color: #0f172a !important;
+}
+html.light footer .text-neutral-400,
+html.light footer .text-neutral-500 {
+  color: #475569 !important;
+}
+html.light .bg-black\/95 {
+  background-color: #0a0a0a !important;
+}
+html.light ::-webkit-scrollbar-thumb {
+  background: rgba(0, 0, 0, 0.2);
+}
+html.light ::-webkit-scrollbar-thumb:hover {
+  background: rgba(0, 0, 0, 0.35);
+}
+

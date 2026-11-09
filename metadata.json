@@ -1,0 +1,6 @@
+{
+  "name": "Guilherme — Qual você quer conhecer?",
+  "description": "Portfólio interativo pessoal explorando as três trajetórias de Guilherme: O Desenvolvedor, O Cavaleiro e O Jogador.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
