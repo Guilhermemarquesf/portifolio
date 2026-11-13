@@ -10,13 +10,10 @@ import {
   X, 
   Check, 
   ZoomIn, 
-  ZoomOut,
-  HelpCircle,
-  Mic
+  ZoomOut
 } from 'lucide-react';
 import { useAccessibility } from '../context/ThemeAccessibilityContext';
 import { Language } from '../data/i18nData';
-import { AudioTranscriptionModal } from './AudioTranscriptionModal';
 
 interface AccessibilityControlsProps {
   language: Language;
@@ -36,19 +33,30 @@ export const AccessibilityControls: React.FC<AccessibilityControlsProps> = ({ la
   } = useAccessibility();
 
   const [isOpen, setIsOpen] = useState(false);
-  const [isAudioModalOpen, setIsAudioModalOpen] = useState(false);
   const [scrollProgress, setScrollProgress] = useState(0);
   const [showScrollTop, setShowScrollTop] = useState(false);
 
-  // Track scroll progress for the Back-to-Top circular indicator
+  // Track scroll progress for the Back-to-Top circular indicator (rAF-throttled)
   useEffect(() => {
-    const handleScroll = () => {
+    let rafPending = false;
+
+    const updateScroll = () => {
+      rafPending = false;
       const totalScroll = document.documentElement.scrollHeight - window.innerHeight;
       const currentProgress = window.scrollY;
-      if (totalScroll > 0) {
-        setScrollProgress(Math.min(100, Math.round((currentProgress / totalScroll) * 100)));
+      const nextProgress =
+        totalScroll > 0 ? Math.min(100, Math.round((currentProgress / totalScroll) * 100)) : 0;
+      const nextShow = currentProgress > 300;
+
+      setScrollProgress((prev) => (prev === nextProgress ? prev : nextProgress));
+      setShowScrollTop((prev) => (prev === nextShow ? prev : nextShow));
+    };
+
+    const handleScroll = () => {
+      if (!rafPending) {
+        rafPending = true;
+        window.requestAnimationFrame(updateScroll);
       }
-      setShowScrollTop(currentProgress > 300);
     };
 
     window.addEventListener('scroll', handleScroll, { passive: true });
@@ -70,7 +78,7 @@ export const AccessibilityControls: React.FC<AccessibilityControlsProps> = ({ la
         <div
           role="dialog"
           aria-label={language === 'pt' ? 'Painel de Acessibilidade e Visualização' : 'Accessibility & Display Panel'}
-          className="w-72 rounded-2xl bg-neutral-900/95 border border-neutral-700/80 p-4 shadow-2xl backdrop-blur-xl animate-in fade-in slide-in-from-bottom-2 duration-200 text-white"
+          className="w-72 rounded-2xl bg-neutral-900 border border-neutral-700 p-4 shadow-2xl animate-in fade-in slide-in-from-bottom-2 duration-200 text-white"
         >
           <div className="flex items-center justify-between pb-3 mb-3 border-b border-neutral-800">
             <div className="flex items-center gap-2">
@@ -222,28 +230,20 @@ export const AccessibilityControls: React.FC<AccessibilityControlsProps> = ({ la
 
       {/* Action Buttons Row */}
       <div className="flex items-center gap-2">
-        {/* Voice Transcription Floating Trigger (Gemini 3.5 Transcribe) */}
-        <button
-          onClick={() => setIsAudioModalOpen(true)}
-          aria-label={language === 'pt' ? 'Gravar e transcrever voz (Gemini)' : 'Record and transcribe audio (Gemini)'}
-          title={language === 'pt' ? 'Transcrição de Áudio por Voz (Gemini)' : 'Voice Audio Transcription (Gemini)'}
-          className="p-3 rounded-full bg-neutral-900/90 hover:bg-neutral-800 border border-neutral-700 text-white shadow-xl backdrop-blur-md transition-all hover:scale-105 group relative"
-        >
-          <Mic className="w-4 h-4 text-neutral-300 group-hover:text-red-400 transition-colors" />
-          <span className="absolute -top-1 -right-1 flex h-2 w-2">
-            <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-red-400 opacity-75"></span>
-            <span className="relative inline-flex rounded-full h-2 w-2 bg-red-500"></span>
-          </span>
-        </button>
-
         {/* Quick Search Floating Trigger */}
         <button
           onClick={() => setIsSearchOpen(true)}
           aria-label={language === 'pt' ? 'Abrir busca rápida (Ctrl+K)' : 'Open quick search (Ctrl+K)'}
           title={language === 'pt' ? 'Busca rápida (Ctrl+K)' : 'Quick search (Ctrl+K)'}
-          className="p-3 rounded-full bg-neutral-900/90 hover:bg-neutral-800 border border-neutral-700 text-white shadow-xl backdrop-blur-md transition-all hover:scale-105 group"
+          className={`p-3 rounded-full border shadow-xl transition-all hover:scale-105 group ${
+            theme === 'light'
+              ? 'bg-white hover:bg-slate-100 border-slate-300 text-slate-800 shadow-md'
+              : 'bg-neutral-900 hover:bg-neutral-800 border-neutral-700 text-white'
+          }`}
         >
-          <Search className="w-4 h-4 text-neutral-300 group-hover:text-amber-400 transition-colors" />
+          <Search className={`w-4 h-4 transition-colors ${
+            theme === 'light' ? 'text-slate-700 group-hover:text-amber-600' : 'text-neutral-300 group-hover:text-amber-400'
+          }`} />
         </button>
 
         {/* Accessibility & Theme Menu Toggle */}
@@ -251,12 +251,12 @@ export const AccessibilityControls: React.FC<AccessibilityControlsProps> = ({ la
           onClick={() => setIsOpen(!isOpen)}
           aria-label={language === 'pt' ? 'Acessibilidade e temas' : 'Accessibility and themes'}
           title={language === 'pt' ? 'Opções de acessibilidade, contraste e tema' : 'Accessibility, contrast and theme options'}
-          className={`p-3 rounded-full border shadow-xl backdrop-blur-md transition-all hover:scale-105 flex items-center justify-center relative ${
+          className={`p-3 rounded-full border shadow-xl transition-all hover:scale-105 flex items-center justify-center relative ${
             highContrast
               ? 'bg-yellow-400 text-black border-yellow-300 shadow-[0_0_20px_rgba(250,204,21,0.4)]'
               : theme === 'light'
-              ? 'bg-white text-neutral-900 border-neutral-300 shadow-md'
-              : 'bg-neutral-900/90 hover:bg-neutral-800 border-neutral-700 text-white'
+              ? 'bg-white hover:bg-slate-100 text-slate-900 border-slate-300 shadow-md'
+              : 'bg-neutral-900 hover:bg-neutral-800 border-neutral-700 text-white'
           }`}
         >
           <Contrast className={`w-4 h-4 ${highContrast ? 'text-black' : ''}`} />
@@ -271,7 +271,11 @@ export const AccessibilityControls: React.FC<AccessibilityControlsProps> = ({ la
             onClick={scrollToTop}
             aria-label={language === 'pt' ? 'Voltar ao topo da página' : 'Back to top of page'}
             title={`${language === 'pt' ? 'Voltar ao topo' : 'Back to top'} (${scrollProgress}%)`}
-            className="relative p-3 rounded-full bg-neutral-900/90 hover:bg-neutral-800 border border-neutral-700 text-white shadow-xl backdrop-blur-md transition-all hover:scale-105 flex items-center justify-center group"
+            className={`relative p-3 rounded-full border shadow-xl transition-all hover:scale-105 flex items-center justify-center group ${
+              theme === 'light'
+                ? 'bg-white hover:bg-slate-100 border-slate-300 text-slate-800 shadow-md'
+                : 'bg-neutral-900 hover:bg-neutral-800 border-neutral-700 text-white'
+            }`}
           >
             {/* SVG Circular Progress Ring */}
             <svg className="absolute inset-0 w-full h-full -rotate-90 pointer-events-none p-0.5" viewBox="0 0 36 36">
@@ -279,7 +283,7 @@ export const AccessibilityControls: React.FC<AccessibilityControlsProps> = ({ la
                 cx="18"
                 cy="18"
                 r="16"
-                className="text-neutral-800"
+                className={theme === 'light' ? 'text-slate-200' : 'text-neutral-800'}
                 strokeWidth="2.5"
                 stroke="currentColor"
                 fill="none"
@@ -297,20 +301,12 @@ export const AccessibilityControls: React.FC<AccessibilityControlsProps> = ({ la
                 fill="none"
               />
             </svg>
-            <ArrowUp className="w-4 h-4 text-neutral-300 group-hover:text-amber-400 transition-colors relative z-10" />
+            <ArrowUp className={`w-4 h-4 transition-colors relative z-10 ${
+              theme === 'light' ? 'text-slate-700 group-hover:text-amber-600' : 'text-neutral-300 group-hover:text-amber-400'
+            }`} />
           </button>
         )}
       </div>
-
-      {/* Audio Transcription Modal */}
-      <AudioTranscriptionModal
-        isOpen={isAudioModalOpen}
-        onClose={() => setIsAudioModalOpen(false)}
-        onApplySearch={(query) => {
-          setIsAudioModalOpen(false);
-          setIsSearchOpen(true);
-        }}
-      />
     </div>
   );
 };

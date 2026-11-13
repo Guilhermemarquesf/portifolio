@@ -90,9 +90,9 @@ export const MinhaVidaExperience: React.FC<MinhaVidaExperienceProps> = ({
       {/* Hero / Biografia */}
       <section id="biografia" className="relative pt-16 pb-20 md:pt-24 md:pb-28 overflow-hidden border-b border-[#382b1d]">
         
-        {/* Warm Golden Glows */}
-        <div className="absolute top-10 left-1/3 w-[600px] h-[600px] bg-[#d4af37]/10 rounded-full blur-[160px] pointer-events-none" />
-        <div className="absolute bottom-0 right-10 w-96 h-96 bg-[#8c6a1e]/15 rounded-full blur-[140px] pointer-events-none" />
+        {/* Warm Golden Glows (zero-blur CSS radial gradients) */}
+        <div className="absolute top-10 left-1/3 w-[640px] h-[640px] bg-[radial-gradient(circle_at_center,rgba(212,175,55,0.10)_0%,transparent_70%)] pointer-events-none" />
+        <div className="absolute bottom-0 right-10 w-[420px] h-[420px] bg-[radial-gradient(circle_at_center,rgba(140,106,30,0.14)_0%,transparent_70%)] pointer-events-none" />
 
         <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10 text-center">
           

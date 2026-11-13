@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { DEV_DATA, IMAGES } from '../data/portfolioData';
 import { DevProject, ExperienceType } from '../types';
 import { ExperienceNav } from './ExperienceNav';
@@ -16,16 +16,12 @@ import {
   Sparkles,
   BookOpen,
   Send,
-  Layers,
   CheckCircle2,
-  Mic,
-  MicOff,
-  Loader2,
-  Upload,
+  Box,
 } from 'lucide-react';
 
 import { Language, I18N } from '../data/i18nData';
-import { useAudioTranscription } from '../hooks/useAudioTranscription';
+import { useAccessibility } from '../context/ThemeAccessibilityContext';
 
 interface DeveloperExperienceProps {
   onNavigate: (exp: ExperienceType) => void;
@@ -39,25 +35,26 @@ export const DeveloperExperience: React.FC<DeveloperExperienceProps> = ({
   onToggleLanguage,
 }) => {
   const t = I18N[language].dev;
-  const [selectedCategory, setSelectedCategory] = useState<string>('Todos');
+  const { open3DStudio } = useAccessibility();
+  const [selectedCategory, setSelectedCategory] = useState<'all' | 'Acadêmico' | 'Pessoal' | 'Full-Stack'>('all');
   const [activeProjectModal, setActiveProjectModal] = useState<DevProject | null>(null);
   const [messageSent, setMessageSent] = useState(false);
   const [contactName, setContactName] = useState('');
   const [contactEmail, setContactEmail] = useState('');
   const [contactMessage, setContactMessage] = useState('');
 
-  const contactFileInputRef = React.useRef<HTMLInputElement>(null);
-
-  const {
-    isRecording: voiceIsRecording,
-    isTranscribing: voiceIsTranscribing,
-    error: voiceError,
-    isPermissionDenied: voicePermissionDenied,
-    startRecording: voiceStart,
-    stopRecording: voiceStop,
-    transcribeAudioFile: voiceTranscribeFile,
-    resetError: voiceResetError,
-  } = useAudioTranscription();
+  useEffect(() => {
+    if (!activeProjectModal) return;
+    document.body.style.overflow = 'hidden';
+    const onKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') setActiveProjectModal(null);
+    };
+    window.addEventListener('keydown', onKeyDown);
+    return () => {
+      document.body.style.overflow = '';
+      window.removeEventListener('keydown', onKeyDown);
+    };
+  }, [activeProjectModal]);
 
   const navSections = [
     { id: 'sobre', label: t.nav.sobre },
@@ -68,18 +65,16 @@ export const DeveloperExperience: React.FC<DeveloperExperienceProps> = ({
     { id: 'contato', label: t.nav.contato },
   ];
 
-  const categories = language === 'pt'
-    ? ['Todos', 'Acadêmico', 'Pessoal', 'Full-Stack']
-    : ['All', 'Academic', 'Personal', 'Full-Stack'];
+  const categories: { id: 'all' | 'Acadêmico' | 'Pessoal' | 'Full-Stack'; label: string }[] = [
+    { id: 'all', label: language === 'pt' ? 'Todos' : 'All' },
+    { id: 'Acadêmico', label: language === 'pt' ? 'Acadêmico' : 'Academic' },
+    { id: 'Pessoal', label: language === 'pt' ? 'Pessoal' : 'Personal' },
+    { id: 'Full-Stack', label: 'Full-Stack' },
+  ];
 
-  const filteredProjects = (selectedCategory === 'Todos' || selectedCategory === 'All')
+  const filteredProjects = selectedCategory === 'all'
     ? DEV_DATA.projects
-    : DEV_DATA.projects.filter((p) => {
-        if (selectedCategory === 'Acadêmico' || selectedCategory === 'Academic') return p.category === 'Acadêmico';
-        if (selectedCategory === 'Pessoal' || selectedCategory === 'Personal') return p.category === 'Pessoal';
-        if (selectedCategory === 'Full-Stack') return p.category === 'Full-Stack';
-        return true;
-      });
+    : DEV_DATA.projects.filter((p) => p.category === selectedCategory);
 
   const targetEmail = DEV_DATA.email;
 
@@ -116,8 +111,8 @@ export const DeveloperExperience: React.FC<DeveloperExperienceProps> = ({
         {/* Clean Tech Dot Grid */}
         <div className="absolute inset-0 opacity-[0.03] pointer-events-none bg-[radial-gradient(#6366f1_1px,transparent_1px)] [background-size:20px_20px]" />
         
-        {/* Subtle, soft top accent highlight */}
-        <div className="absolute -top-32 left-1/2 -translate-x-1/2 w-[700px] h-[300px] bg-indigo-600/10 rounded-full blur-[150px] pointer-events-none" />
+        {/* Subtle, soft top accent highlight (zero-blur CSS radial gradient) */}
+        <div className="absolute -top-32 left-1/2 -translate-x-1/2 w-[740px] h-[340px] bg-[radial-gradient(ellipse_at_center,rgba(79,70,229,0.12)_0%,transparent_70%)] pointer-events-none" />
 
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
           <div className="grid grid-cols-1 lg:grid-cols-12 gap-12 items-center">
@@ -181,6 +176,13 @@ export const DeveloperExperience: React.FC<DeveloperExperienceProps> = ({
                   <Mail className="w-4 h-4" />
                   <span>{t.hero.btnContact}</span>
                 </a>
+                <button
+                  onClick={() => open3DStudio('nucleo')}
+                  className="px-5 py-3 rounded-lg bg-indigo-950/70 hover:bg-indigo-900/70 border border-indigo-500/40 text-indigo-200 text-sm font-medium transition-colors flex items-center gap-2"
+                >
+                  <Box className="w-4 h-4 text-indigo-400" />
+                  <span>{language === 'pt' ? 'Núcleo 3D' : '3D Core'}</span>
+                </button>
               </div>
 
             </div>
@@ -207,6 +209,7 @@ export const DeveloperExperience: React.FC<DeveloperExperienceProps> = ({
                     alt="Estação de Desenvolvimento"
                     domainTheme="tech"
                     objectFit="contain"
+                    priority
                     className="w-full h-full max-h-full"
                   />
                   <div className="absolute inset-0 bg-gradient-to-t from-slate-950 via-slate-950/30 to-transparent pointer-events-none" />
@@ -299,18 +302,18 @@ export const DeveloperExperience: React.FC<DeveloperExperienceProps> = ({
             </div>
 
             {/* Filter Buttons */}
-            <div className="flex items-center gap-1.5 p-1 bg-slate-900 border border-slate-800 rounded-lg">
+            <div className="flex items-center gap-1.5 p-1 bg-slate-900 border border-slate-800 rounded-lg flex-wrap">
               {categories.map((cat) => (
                 <button
-                  key={cat}
-                  onClick={() => setSelectedCategory(cat)}
+                  key={cat.id}
+                  onClick={() => setSelectedCategory(cat.id)}
                   className={`px-3 py-1.5 text-xs font-medium rounded-md transition-colors ${
-                    selectedCategory === cat
+                    selectedCategory === cat.id
                       ? 'bg-indigo-600 text-white shadow-sm'
                       : 'text-slate-400 hover:text-white'
                   }`}
                 >
-                  {cat}
+                  {cat.label}
                 </button>
               ))}
             </div>
@@ -541,7 +544,7 @@ export const DeveloperExperience: React.FC<DeveloperExperienceProps> = ({
                   href={DEV_DATA.github}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="flex items-center justify-between p-4 rounded-xl bg-slate-900 border border-slate-800 hover:border-indigo-500/60 hover:bg-slate-850 transition-all group"
+                  className="flex items-center justify-between p-4 rounded-xl bg-slate-900 border border-slate-800 hover:border-indigo-500/60 hover:bg-slate-800 transition-all group"
                 >
                   <div className="flex items-center gap-3">
                     <div className="p-2 rounded-lg bg-slate-800 text-white group-hover:bg-indigo-600 transition-colors">
@@ -559,7 +562,7 @@ export const DeveloperExperience: React.FC<DeveloperExperienceProps> = ({
                   href={DEV_DATA.linkedin}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="flex items-center justify-between p-4 rounded-xl bg-slate-900 border border-slate-800 hover:border-indigo-500/60 hover:bg-slate-850 transition-all group"
+                  className="flex items-center justify-between p-4 rounded-xl bg-slate-900 border border-slate-800 hover:border-indigo-500/60 hover:bg-slate-800 transition-all group"
                 >
                   <div className="flex items-center gap-3">
                     <div className="p-2 rounded-lg bg-slate-800 text-white group-hover:bg-indigo-600 transition-colors">
@@ -662,86 +665,9 @@ export const DeveloperExperience: React.FC<DeveloperExperienceProps> = ({
                     </div>
 
                     <div>
-                      <div className="flex items-center justify-between mb-1">
-                        <label className="block text-xs font-medium text-slate-300">
-                          Mensagem
-                        </label>
-                        <div className="flex items-center gap-1.5">
-                          <input
-                            type="file"
-                            ref={contactFileInputRef}
-                            accept="audio/*,.mp3,.wav,.m4a,.ogg,.webm,.aac"
-                            className="hidden"
-                            onChange={async (e) => {
-                              const file = e.target.files?.[0];
-                              if (file) {
-                                const text = await voiceTranscribeFile(file);
-                                if (text) {
-                                  setContactMessage((prev) => (prev ? `${prev} ${text}` : text));
-                                }
-                                e.target.value = '';
-                              }
-                            }}
-                          />
-
-                          <button
-                            type="button"
-                            onClick={async () => {
-                              if (voiceIsRecording) {
-                                const text = await voiceStop();
-                                if (text) {
-                                  setContactMessage((prev) => (prev ? `${prev} ${text}` : text));
-                                }
-                              } else {
-                                await voiceStart();
-                              }
-                            }}
-                            disabled={voiceIsTranscribing}
-                            className={`text-xs px-2.5 py-1 rounded-md flex items-center gap-1.5 transition-colors border ${
-                              voiceIsRecording
-                                ? 'bg-red-500/20 text-red-400 border-red-500/50 animate-pulse'
-                                : voiceIsTranscribing
-                                ? 'bg-indigo-500/20 text-indigo-300 border-indigo-500/30'
-                                : 'bg-slate-900 hover:bg-slate-800 text-slate-300 border-slate-700'
-                            }`}
-                            title="Ditar mensagem por voz usando Gemini 3.5 Transcribe"
-                          >
-                            {voiceIsTranscribing ? (
-                              <>
-                                <Loader2 className="w-3.5 h-3.5 animate-spin text-indigo-400" />
-                                <span>Transcrevendo...</span>
-                              </>
-                            ) : voiceIsRecording ? (
-                              <>
-                                <MicOff className="w-3.5 h-3.5 text-red-400" />
-                                <span className="font-semibold text-red-400">Gravando... (Clique para parar)</span>
-                              </>
-                            ) : (
-                              <>
-                                <Mic className="w-3.5 h-3.5 text-indigo-400" />
-                                <span>Ditar com Gemini (Voz)</span>
-                              </>
-                            )}
-                          </button>
-                        </div>
-                      </div>
-
-                      {voiceError && (
-                        <div className="text-[11px] text-amber-300 mb-2 p-2 rounded bg-amber-950/40 border border-amber-800/50 flex items-center justify-between gap-2">
-                          <span>
-                            {voicePermissionDenied
-                              ? 'Microfone bloqueado pelo navegador. Libere a permissão no ícone de cadeado ou envie um áudio gravado.'
-                              : voiceError}
-                          </span>
-                          <button
-                            type="button"
-                            onClick={() => contactFileInputRef.current?.click()}
-                            className="px-2 py-0.5 rounded bg-amber-500/20 hover:bg-amber-500/30 text-amber-200 border border-amber-500/40 shrink-0"
-                          >
-                            Enviar Áudio
-                          </button>
-                        </div>
-                      )}
+                      <label className="block text-xs font-medium text-slate-300 mb-1">
+                        Mensagem
+                      </label>
 
                       <textarea
                         rows={4}
@@ -775,7 +701,7 @@ export const DeveloperExperience: React.FC<DeveloperExperienceProps> = ({
         <div
           role="dialog"
           aria-modal="true"
-          className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/85 backdrop-blur-sm"
+          className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/90"
           onClick={() => setActiveProjectModal(null)}
         >
           <div

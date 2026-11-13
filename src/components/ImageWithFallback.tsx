@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 
 interface ImageWithFallbackProps extends React.ImgHTMLAttributes<HTMLImageElement> {
   fallbackTitle?: string;
@@ -6,6 +6,7 @@ interface ImageWithFallbackProps extends React.ImgHTMLAttributes<HTMLImageElemen
   domainTheme?: 'tech' | 'equestrian' | 'football' | 'neutral';
   objectFit?: 'contain' | 'cover' | 'fill' | 'scale-down' | 'none';
   imgClassName?: string;
+  priority?: boolean;
 }
 
 export const ImageWithFallback: React.FC<ImageWithFallbackProps> = ({
@@ -17,10 +18,19 @@ export const ImageWithFallback: React.FC<ImageWithFallbackProps> = ({
   fallbackSubtitle = 'Visualização em modo reservado',
   domainTheme = 'neutral',
   objectFit = 'contain',
+  priority = false,
+  loading,
+  decoding,
   ...rest
 }) => {
   const [error, setError] = useState(false);
   const [loaded, setLoaded] = useState(false);
+
+  // Reset image loading/error state whenever src changes (e.g. inside Lightbox Next/Prev)
+  useEffect(() => {
+    setError(false);
+    setLoaded(false);
+  }, [src]);
 
   const getThemeFallbackBg = () => {
     switch (domainTheme) {
@@ -68,11 +78,13 @@ export const ImageWithFallback: React.FC<ImageWithFallbackProps> = ({
   return (
     <div className={`relative overflow-hidden flex items-center justify-center ${className}`}>
       {!loaded && (
-        <div className="absolute inset-0 bg-neutral-900/60 animate-pulse pointer-events-none" />
+        <div className="absolute inset-0 bg-neutral-900/60 pointer-events-none" />
       )}
       <img
         src={src}
         alt={alt}
+        loading={loading ?? (priority ? 'eager' : 'lazy')}
+        decoding={decoding ?? 'async'}
         referrerPolicy="no-referrer"
         onLoad={() => setLoaded(true)}
         onError={() => setError(true)}
@@ -84,4 +96,3 @@ export const ImageWithFallback: React.FC<ImageWithFallbackProps> = ({
     </div>
   );
 };
-

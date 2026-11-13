@@ -1,9 +1,19 @@
 import React, { useState, useEffect, useMemo, useRef } from 'react';
-import { Search, X, Trophy, Terminal, Award, Infinity as InfinityIcon, ArrowRight, Image as ImageIcon, MapPin, Calendar, Mic, MicOff, Loader2 } from 'lucide-react';
+import {
+  Search,
+  X,
+  Trophy,
+  Terminal,
+  Award,
+  Infinity as InfinityIcon,
+  ArrowRight,
+  Image as ImageIcon,
+  Box,
+} from 'lucide-react';
 import { ExperienceType } from '../types';
 import { CAVALEIRO_DATA, JOGADOR_DATA, DEV_DATA } from '../data/portfolioData';
 import { Language } from '../data/i18nData';
-import { useAudioTranscription } from '../hooks/useAudioTranscription';
+import { useAccessibility } from '../context/ThemeAccessibilityContext';
 
 interface SearchResultItem {
   id: string;
@@ -12,7 +22,8 @@ interface SearchResultItem {
   category: string;
   experience: ExperienceType;
   sectionId?: string;
-  iconType: 'cavaleiro' | 'dev' | 'jogador' | 'vida' | 'photo';
+  studioExhibit?: 'cavalo' | 'trofeu' | 'ferradura' | 'nucleo';
+  iconType: 'cavaleiro' | 'dev' | 'jogador' | 'vida' | 'photo' | 'studio';
   badge?: string;
 }
 
@@ -30,54 +41,49 @@ export const QuickSearchModal: React.FC<QuickSearchModalProps> = ({
   language,
 }) => {
   const [query, setQuery] = useState('');
+  const [activeIndex, setActiveIndex] = useState(0);
   const inputRef = useRef<HTMLInputElement>(null);
-
-  const {
-    isRecording,
-    isTranscribing,
-    startRecording,
-    stopRecording,
-    error: transcriptionError,
-    isPermissionDenied,
-    resetError,
-  } = useAudioTranscription();
-
-  const handleToggleVoiceSearch = async () => {
-    if (isRecording) {
-      const text = await stopRecording();
-      if (text) {
-        setQuery(text);
-      }
-    } else {
-      await startRecording();
-    }
-  };
+  const listRef = useRef<HTMLDivElement>(null);
+  const { open3DStudio } = useAccessibility();
 
   useEffect(() => {
-    if (isOpen) {
-      document.body.style.overflow = 'hidden';
-      resetError();
-      setTimeout(() => inputRef.current?.focus(), 50);
-    } else {
-      document.body.style.overflow = '';
+    if (!isOpen) {
       setQuery('');
-      resetError();
+      setActiveIndex(0);
+      return;
     }
-  }, [isOpen, resetError]);
-
-  useEffect(() => {
-    const handleKeyDown = (e: KeyboardEvent) => {
-      if (e.key === 'Escape' && isOpen) {
-        onClose();
-      }
+    document.body.style.overflow = 'hidden';
+    const focusTimer = window.setTimeout(() => inputRef.current?.focus(), 50);
+    return () => {
+      document.body.style.overflow = '';
+      window.clearTimeout(focusTimer);
     };
-    window.addEventListener('keydown', handleKeyDown);
-    return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [isOpen, onClose]);
+  }, [isOpen]);
 
   // Index of searchable content across all personas
   const searchableIndex = useMemo<SearchResultItem[]>(() => {
-    const items: SearchResultItem[] = [];
+    const items: SearchResultItem[] = [
+      {
+        id: 'studio-3d-cavalo',
+        title: 'Estúdio 3D — Cavalo Mangalarga Marchador',
+        subtitle: 'Escultura 3D interativa em Three.js com acabamentos Castanho, Bronze e Ébano',
+        category: 'Estúdio 3D Interativo',
+        experience: 'cavaleiro',
+        studioExhibit: 'cavalo',
+        iconType: 'studio',
+        badge: 'Three.js 3D',
+      },
+      {
+        id: 'studio-3d-nucleo',
+        title: 'Estúdio 3D — Núcleo Dev & Engenharia',
+        subtitle: 'Visualizador 3D com vista explodida e iluminação de estúdio',
+        category: 'Estúdio 3D Interativo',
+        experience: 'dev',
+        studioExhibit: 'nucleo',
+        iconType: 'studio',
+        badge: 'Three.js 3D',
+      },
+    ];
 
     // Cavaleiro items
     CAVALEIRO_DATA.achievements.forEach((ach) => {
@@ -191,7 +197,7 @@ export const QuickSearchModal: React.FC<QuickSearchModalProps> = ({
       subtitle: 'O elo entre o código, o campo e as pistas. Salmos 37:5 e a bênção de Deus em cada conquista.',
       category: 'Biografia & Filosofia',
       experience: 'vida',
-      sectionId: 'historia',
+      sectionId: 'biografia',
       iconType: 'vida',
       badge: 'Minha Vida',
     });
@@ -202,25 +208,60 @@ export const QuickSearchModal: React.FC<QuickSearchModalProps> = ({
   const results = useMemo(() => {
     const q = query.trim().toLowerCase();
     if (!q) {
-      // Return top featured highlights when query is empty
       return searchableIndex.slice(0, 8);
     }
-    return searchableIndex.filter((item) => {
-      return (
-        item.title.toLowerCase().includes(q) ||
-        item.subtitle.toLowerCase().includes(q) ||
-        item.category.toLowerCase().includes(q) ||
-        (item.badge && item.badge.toLowerCase().includes(q))
-      );
-    }).slice(0, 15);
+    return searchableIndex
+      .filter((item) => {
+        return (
+          item.title.toLowerCase().includes(q) ||
+          item.subtitle.toLowerCase().includes(q) ||
+          item.category.toLowerCase().includes(q) ||
+          (item.badge && item.badge.toLowerCase().includes(q))
+        );
+      })
+      .slice(0, 15);
   }, [query, searchableIndex]);
 
-  if (!isOpen) return null;
+  useEffect(() => {
+    setActiveIndex(0);
+  }, [query]);
 
   const handleSelect = (item: SearchResultItem) => {
-    onSelectExperience(item.experience, item.sectionId);
     onClose();
+    if (item.studioExhibit) {
+      open3DStudio(item.studioExhibit);
+      return;
+    }
+    onSelectExperience(item.experience, item.sectionId);
   };
+
+  useEffect(() => {
+    if (!isOpen) return;
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') {
+        onClose();
+      } else if (e.key === 'ArrowDown' && results.length > 0) {
+        e.preventDefault();
+        setActiveIndex((prev) => (prev + 1) % results.length);
+      } else if (e.key === 'ArrowUp' && results.length > 0) {
+        e.preventDefault();
+        setActiveIndex((prev) => (prev - 1 + results.length) % results.length);
+      } else if (e.key === 'Enter' && results.length > 0) {
+        e.preventDefault();
+        const chosen = results[activeIndex] || results[0];
+        if (chosen) handleSelect(chosen);
+      }
+    };
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [isOpen, onClose, results, activeIndex]);
+
+  useEffect(() => {
+    const el = listRef.current?.querySelector(`[data-idx="${activeIndex}"]`);
+    el?.scrollIntoView({ block: 'nearest' });
+  }, [activeIndex]);
+
+  if (!isOpen) return null;
 
   const getIcon = (type: SearchResultItem['iconType']) => {
     switch (type) {
@@ -234,6 +275,8 @@ export const QuickSearchModal: React.FC<QuickSearchModalProps> = ({
         return <InfinityIcon className="w-4 h-4 text-[#d4af37]" />;
       case 'photo':
         return <ImageIcon className="w-4 h-4 text-amber-300" />;
+      case 'studio':
+        return <Box className="w-4 h-4 text-[#d4af37]" />;
     }
   };
 
@@ -241,7 +284,7 @@ export const QuickSearchModal: React.FC<QuickSearchModalProps> = ({
     <div
       role="dialog"
       aria-modal="true"
-      className="fixed inset-0 z-50 flex items-start justify-center pt-16 sm:pt-24 px-4 bg-black/80 backdrop-blur-md"
+      className="fixed inset-0 z-50 flex items-start justify-center pt-16 sm:pt-24 px-4 bg-black/85"
       onClick={onClose}
     >
       <div
@@ -249,7 +292,7 @@ export const QuickSearchModal: React.FC<QuickSearchModalProps> = ({
         onClick={(e) => e.stopPropagation()}
       >
         {/* Search Input Bar */}
-        <div className="flex items-center gap-3 p-4 border-b border-neutral-800 bg-black/40">
+        <div className="flex items-center gap-3 p-4 border-b border-neutral-800 bg-black/50">
           <Search className="w-5 h-5 text-neutral-400 shrink-0" />
           <input
             ref={inputRef}
@@ -257,46 +300,12 @@ export const QuickSearchModal: React.FC<QuickSearchModalProps> = ({
             value={query}
             onChange={(e) => setQuery(e.target.value)}
             placeholder={
-              isRecording
-                ? (language === 'pt' ? '🎙️ Gravando... Fale o que procura e clique no microfone para parar' : '🎙️ Recording... Speak now and click microphone to stop')
-                : isTranscribing
-                ? (language === 'pt' ? '⚡ Transcrevendo áudio com Gemini 3.5 Transcribe...' : '⚡ Transcribing audio with Gemini 3.5 Transcribe...')
-                : language === 'pt'
-                ? 'Buscar conquistas, fotos, Haras GMF, Galo, projetos, C#, PUC...'
-                : 'Search achievements, photos, Haras GMF, Galo, projects, C#, PUC...'
+              language === 'pt'
+                ? 'Buscar conquistas, fotos, Cavalo 3D, Haras GMF, Galo, C#, PUC...'
+                : 'Search achievements, photos, 3D Horse, Haras GMF, Galo, C#, PUC...'
             }
-            className={`w-full bg-transparent text-white text-sm sm:text-base placeholder-neutral-500 focus:outline-none ${
-              isRecording ? 'text-rose-400 placeholder-rose-400/80 animate-pulse' : ''
-            }`}
+            className="w-full bg-transparent text-white text-sm sm:text-base placeholder-neutral-500 focus:outline-none"
           />
-
-          {/* Voice Search with Gemini 3.5 Transcribe */}
-          <button
-            type="button"
-            onClick={handleToggleVoiceSearch}
-            disabled={isTranscribing}
-            className={`p-1.5 rounded-lg border transition-all flex items-center justify-center shrink-0 ${
-              isRecording
-                ? 'bg-rose-600 border-rose-500 text-white animate-pulse shadow-[0_0_12px_rgba(225,29,72,0.6)]'
-                : isTranscribing
-                ? 'bg-amber-500/20 border-amber-500/40 text-amber-400 cursor-wait'
-                : 'bg-neutral-800/80 hover:bg-neutral-700 border-neutral-700 text-neutral-300 hover:text-white'
-            }`}
-            title={
-              isRecording
-                ? 'Parar gravação e transcrever com Gemini'
-                : 'Pesquisa por Voz (Gemini 3.5 Transcribe)'
-            }
-            aria-label="Pesquisa por Voz"
-          >
-            {isTranscribing ? (
-              <Loader2 className="w-4 h-4 animate-spin" />
-            ) : isRecording ? (
-              <MicOff className="w-4 h-4" />
-            ) : (
-              <Mic className="w-4 h-4" />
-            )}
-          </button>
 
           {query && (
             <button
@@ -312,75 +321,78 @@ export const QuickSearchModal: React.FC<QuickSearchModalProps> = ({
           </kbd>
         </div>
 
-        {/* Transcription Error Banner if any */}
-        {transcriptionError && (
-          <div className="px-4 py-2 bg-amber-950/70 border-b border-amber-800 text-xs text-amber-200 flex items-center justify-between gap-2">
-            <span>
-              {isPermissionDenied
-                ? 'Microfone bloqueado: libere a permissão no ícone de cadeado do navegador.'
-                : transcriptionError}
-            </span>
-            <button
-              onClick={resetError}
-              className="px-2 py-0.5 rounded text-[10px] bg-white/10 hover:bg-white/20 text-white shrink-0"
-            >
-              OK
-            </button>
-          </div>
-        )}
-
         {/* Results List */}
-        <div className="flex-1 overflow-y-auto p-2 sm:p-3 divide-y divide-neutral-800/60">
+        <div
+          ref={listRef}
+          className="flex-1 overflow-y-auto p-2 sm:p-3 divide-y divide-neutral-800/60"
+        >
           {results.length === 0 ? (
             <div className="py-12 text-center text-neutral-500 text-sm">
               <Search className="w-8 h-8 mx-auto mb-2 opacity-40" />
               <p>{language === 'pt' ? 'Nenhum resultado encontrado para sua busca.' : 'No results found for your search.'}</p>
               <p className="text-xs text-neutral-600 mt-1">
-                {language === 'pt' ? 'Tente buscar por "Haras", "Copa", "Galo", "PUC" ou "C#".' : 'Try searching for "Haras", "Copa", "Galo", "PUC" or "C#".'}
+                {language === 'pt' ? 'Tente buscar por "Cavalo 3D", "Haras", "Copa", "Galo" ou "C#".' : 'Try searching for "3D Horse", "Haras", "Copa", "Galo" or "C#".'}
               </p>
             </div>
           ) : (
-            results.map((item) => (
-              <button
-                key={item.id}
-                onClick={() => handleSelect(item)}
-                className="w-full text-left p-3 rounded-xl hover:bg-white/5 transition-all flex items-start justify-between gap-3 group"
-              >
-                <div className="flex items-start gap-3 flex-1 min-w-0">
-                  <div className="p-2 rounded-lg bg-black/60 border border-neutral-800 shrink-0 mt-0.5">
-                    {getIcon(item.iconType)}
-                  </div>
-                  <div className="flex-1 min-w-0">
-                    <div className="flex items-center gap-2 mb-0.5 flex-wrap">
-                      <span className="text-[10px] font-bold uppercase tracking-wider text-neutral-400">
-                        {item.category}
-                      </span>
-                      {item.badge && (
-                        <span className="text-[9px] px-1.5 py-0.2 rounded-full bg-neutral-800 text-neutral-300 border border-neutral-700">
-                          {item.badge}
-                        </span>
-                      )}
+            results.map((item, idx) => {
+              const isSelected = idx === activeIndex;
+              return (
+                <button
+                  key={item.id}
+                  data-idx={idx}
+                  onMouseEnter={() => setActiveIndex(idx)}
+                  onClick={() => handleSelect(item)}
+                  className={`w-full text-left p-3 rounded-xl transition-all flex items-start justify-between gap-3 group ${
+                    isSelected ? 'bg-white/10' : 'hover:bg-white/5'
+                  }`}
+                >
+                  <div className="flex items-start gap-3 flex-1 min-w-0">
+                    <div className="p-2 rounded-lg bg-black/60 border border-neutral-800 shrink-0 mt-0.5">
+                      {getIcon(item.iconType)}
                     </div>
-                    <h4 className="text-sm font-semibold text-white group-hover:text-amber-400 transition-colors truncate">
-                      {item.title}
-                    </h4>
-                    <p className="text-xs text-neutral-400 line-clamp-1 mt-0.5">
-                      {item.subtitle}
-                    </p>
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-center gap-2 mb-0.5 flex-wrap">
+                        <span className="text-[10px] font-bold uppercase tracking-wider text-neutral-400">
+                          {item.category}
+                        </span>
+                        {item.badge && (
+                          <span className="text-[9px] px-1.5 py-0.5 rounded-full bg-neutral-800 text-neutral-300 border border-neutral-700">
+                            {item.badge}
+                          </span>
+                        )}
+                      </div>
+                      <h4
+                        className={`text-sm font-semibold transition-colors truncate ${
+                          isSelected ? 'text-amber-400' : 'text-white group-hover:text-amber-400'
+                        }`}
+                      >
+                        {item.title}
+                      </h4>
+                      <p className="text-xs text-neutral-400 line-clamp-1 mt-0.5">
+                        {item.subtitle}
+                      </p>
+                    </div>
                   </div>
-                </div>
 
-                <div className="text-neutral-500 group-hover:text-white transition-colors shrink-0 self-center">
-                  <ArrowRight className="w-4 h-4 transform group-hover:translate-x-1 transition-transform" />
-                </div>
-              </button>
-            ))
+                  <div className="text-neutral-500 group-hover:text-white transition-colors shrink-0 self-center">
+                    <ArrowRight className="w-4 h-4 transform group-hover:translate-x-1 transition-transform" />
+                  </div>
+                </button>
+              );
+            })
           )}
         </div>
 
         {/* Footer shortcuts hint */}
         <div className="p-2.5 bg-black/60 border-t border-neutral-800 text-[11px] text-neutral-500 flex items-center justify-between px-4">
           <div className="flex items-center gap-3">
+            <span>
+              <kbd className="px-1.5 py-0.5 bg-neutral-800 border border-neutral-700 rounded text-[10px] text-neutral-300 font-mono">
+                ↑↓
+              </kbd>{' '}
+              {language === 'pt' ? 'navegar' : 'select'}
+            </span>
             <span>
               <kbd className="px-1.5 py-0.5 bg-neutral-800 border border-neutral-700 rounded text-[10px] text-neutral-300 font-mono">
                 Enter
@@ -395,7 +407,7 @@ export const QuickSearchModal: React.FC<QuickSearchModalProps> = ({
             </span>
           </div>
           <span className="text-neutral-400 font-medium">
-            {results.length} {language === 'pt' ? 'resultados disponíveis' : 'results found'}
+            {results.length} {language === 'pt' ? 'resultados' : 'results'}
           </span>
         </div>
       </div>

@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { X, Upload, Check } from 'lucide-react';
 
 interface PhotoUploaderModalProps {
@@ -33,6 +33,19 @@ export const PhotoUploaderModal: React.FC<PhotoUploaderModalProps> = ({
   const [location, setLocation] = useState('');
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
   const [errorMsg, setErrorMsg] = useState('');
+
+  useEffect(() => {
+    if (!isOpen) return;
+    document.body.style.overflow = 'hidden';
+    const onKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') onClose();
+    };
+    window.addEventListener('keydown', onKeyDown);
+    return () => {
+      document.body.style.overflow = '';
+      window.removeEventListener('keydown', onKeyDown);
+    };
+  }, [isOpen, onClose]);
 
   if (!isOpen) return null;
 
@@ -109,7 +122,7 @@ export const PhotoUploaderModal: React.FC<PhotoUploaderModalProps> = ({
     <div
       role="dialog"
       aria-modal="true"
-      className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/85 backdrop-blur-sm"
+      className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/90"
       onClick={onClose}
     >
       <div

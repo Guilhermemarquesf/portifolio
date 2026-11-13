@@ -13,7 +13,8 @@ import {
   Sun, 
   Moon, 
   Contrast, 
-  Search 
+  Search,
+  Box 
 } from 'lucide-react';
 import { useAccessibility } from '../context/ThemeAccessibilityContext';
 
@@ -34,13 +35,13 @@ export const ExperienceNav: React.FC<ExperienceNavProps> = ({
 }) => {
   const t = I18N[language].nav;
   const [copied, setCopied] = useState(false);
-  const { theme: currentTheme, toggleTheme, highContrast, toggleHighContrast, setIsSearchOpen } = useAccessibility();
+  const { theme: currentTheme, toggleTheme, highContrast, toggleHighContrast, setIsSearchOpen, open3DStudio } = useAccessibility();
 
   const getNavTheme = () => {
     switch (currentExperience) {
       case 'dev':
         return {
-          headerBg: 'bg-[#080d1a]/85 border-slate-800/80 text-slate-100',
+          headerBg: 'bg-[#080d1a]/95 border-slate-800/80 text-slate-100',
           brandColor: 'text-white font-bold',
           accentBadge: 'text-indigo-400 font-code',
           activeLink: 'text-indigo-400',
@@ -48,7 +49,7 @@ export const ExperienceNav: React.FC<ExperienceNavProps> = ({
         };
       case 'cavaleiro':
         return {
-          headerBg: 'bg-[#18120c]/85 border-[#453222]/80 text-[#f6f1ea]',
+          headerBg: 'bg-[#18120c]/95 border-[#453222]/80 text-[#f6f1ea]',
           brandColor: 'text-[#f6f1ea] font-serif-luxury font-bold tracking-wider',
           accentBadge: 'text-[#d4af37] font-serif-luxury',
           activeLink: 'text-[#d4af37]',
@@ -56,7 +57,7 @@ export const ExperienceNav: React.FC<ExperienceNavProps> = ({
         };
       case 'jogador':
         return {
-          headerBg: 'bg-[#0a0a0a]/90 border-neutral-800 text-white',
+          headerBg: 'bg-[#0a0a0a]/95 border-neutral-800 text-white',
           brandColor: 'text-white font-sport uppercase tracking-widest text-lg font-bold',
           accentBadge: 'text-emerald-400 font-sport',
           activeLink: 'text-emerald-400',
@@ -64,7 +65,7 @@ export const ExperienceNav: React.FC<ExperienceNavProps> = ({
         };
       case 'vida':
         return {
-          headerBg: 'bg-[#0e0c0a]/90 border-[#382b1d] text-[#f6f1ea]',
+          headerBg: 'bg-[#0e0c0a]/95 border-[#382b1d] text-[#f6f1ea]',
           brandColor: 'text-[#d4af37] font-display-serif tracking-wider font-bold',
           accentBadge: 'text-[#d4af37] font-display-serif',
           activeLink: 'text-[#d4af37]',
@@ -72,7 +73,7 @@ export const ExperienceNav: React.FC<ExperienceNavProps> = ({
         };
       default:
         return {
-          headerBg: 'bg-black/80 border-neutral-800 text-white',
+          headerBg: 'bg-black/95 border-neutral-800 text-white',
           brandColor: 'text-white font-bold',
           accentBadge: 'text-neutral-400',
           activeLink: 'text-white',
@@ -92,7 +93,7 @@ export const ExperienceNav: React.FC<ExperienceNavProps> = ({
   };
 
   return (
-    <header className={`sticky top-0 z-40 w-full backdrop-blur-md border-b transition-colors ${theme.headerBg}`}>
+    <header className={`sticky top-0 z-40 w-full border-b transition-colors ${theme.headerBg}`}>
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between gap-3 md:gap-8">
         
         {/* Zone 1: Return to Home & Persona Wordmark */}
@@ -105,7 +106,7 @@ export const ExperienceNav: React.FC<ExperienceNavProps> = ({
             <ArrowLeft className="w-4 h-4 shrink-0" />
             <span className="hidden sm:inline">{t.home}</span>
           </button>
-          <span className="text-white/20 select-none">/</span>
+          <span className={`${currentTheme === 'light' ? 'text-slate-300' : 'text-white/20'} select-none`}>/</span>
           {currentExperience === 'cavaleiro' && (
             <div className="w-7 h-7 sm:w-8 sm:h-8 rounded-full border border-[#d4af37] overflow-hidden shrink-0 shadow-sm bg-black">
               <img
@@ -200,16 +201,37 @@ export const ExperienceNav: React.FC<ExperienceNavProps> = ({
             </button>
           </div>
 
+          {/* Interactive 3D Studio Button */}
+          <button
+            onClick={() => open3DStudio(currentExperience === 'dev' ? 'nucleo' : 'cavalo')}
+            aria-label={language === 'pt' ? 'Abrir Estúdio 3D' : 'Open 3D Studio'}
+            title={language === 'pt' ? 'Explorar em 3D (Three.js)' : 'Explore in 3D (Three.js)'}
+            className={`flex items-center gap-1.5 p-1.5 sm:px-2.5 sm:py-1 text-xs rounded-md border transition-all shrink-0 ${
+              currentTheme === 'light'
+                ? 'bg-amber-50 hover:bg-amber-100 border-amber-300 text-amber-900 font-semibold'
+                : 'bg-[#d4af37]/15 hover:bg-[#d4af37]/25 border-[#d4af37]/40 text-[#f3dfb0]'
+            }`}
+          >
+            <Box className="w-3.5 h-3.5 text-[#d4af37]" />
+            <span className="hidden xl:inline text-[11px]">3D</span>
+          </button>
+
           {/* Quick Search Button */}
           <button
             onClick={() => setIsSearchOpen(true)}
             aria-label={language === 'pt' ? 'Busca rápida (Ctrl+K)' : 'Quick search (Ctrl+K)'}
             title={language === 'pt' ? 'Buscar no portfólio (Ctrl+K)' : 'Search portfolio (Ctrl+K)'}
-            className="flex items-center gap-1.5 p-1.5 sm:px-2.5 sm:py-1 text-xs rounded-md bg-white/5 hover:bg-white/10 border border-white/10 text-white/80 hover:text-white transition-all shrink-0"
+            className={`flex items-center gap-1.5 p-1.5 sm:px-2.5 sm:py-1 text-xs rounded-md border transition-all shrink-0 ${
+              currentTheme === 'light'
+                ? 'bg-slate-100 hover:bg-slate-200 border-slate-300 text-slate-800'
+                : 'bg-white/5 hover:bg-white/10 border-white/10 text-white/80 hover:text-white'
+            }`}
           >
-            <Search className="w-3.5 h-3.5 text-neutral-300" />
+            <Search className="w-3.5 h-3.5" />
             <span className="hidden xl:inline text-[11px]">{language === 'pt' ? 'Buscar' : 'Search'}</span>
-            <kbd className="hidden lg:inline text-[9px] px-1 py-0.2 bg-black/40 border border-white/15 rounded text-neutral-400 font-mono">
+            <kbd className={`hidden lg:inline text-[9px] px-1 py-0.5 rounded font-mono border ${
+              currentTheme === 'light' ? 'bg-white border-slate-300 text-slate-600' : 'bg-black/40 border-white/15 text-neutral-400'
+            }`}>
               ⌘K
             </kbd>
           </button>
@@ -226,6 +248,8 @@ export const ExperienceNav: React.FC<ExperienceNavProps> = ({
             className={`flex items-center gap-1.5 p-1.5 sm:px-2.5 sm:py-1 text-xs rounded-md border transition-all shrink-0 ${
               highContrast
                 ? 'bg-yellow-400 text-black border-yellow-300 font-bold shadow-[0_0_15px_rgba(250,204,21,0.4)]'
+                : currentTheme === 'light'
+                ? 'bg-slate-100 hover:bg-slate-200 border-slate-300 text-slate-800'
                 : 'bg-white/5 hover:bg-white/10 border-white/10 text-white/80 hover:text-white'
             }`}
           >
@@ -249,7 +273,7 @@ export const ExperienceNav: React.FC<ExperienceNavProps> = ({
             className={`p-1.5 sm:px-2 sm:py-1 text-xs rounded-md border transition-all shrink-0 flex items-center gap-1 ${
               currentTheme === 'light'
                 ? 'bg-amber-400 text-black border-amber-300 font-semibold'
-                : 'bg-white/5 hover:bg-black/10 border-white/10 text-black/80 hover:text-black'
+                : 'bg-white/5 hover:bg-white/10 border-white/10 text-white/80 hover:text-white'
             }`}
           >
             {currentTheme === 'light' ? (
@@ -273,16 +297,20 @@ export const ExperienceNav: React.FC<ExperienceNavProps> = ({
               setTimeout(() => setCopied(false), 2000);
             }}
             title={language === 'pt' ? 'Copiar link do portfólio' : 'Copy portfolio link'}
-            className="flex items-center gap-1.5 p-1.5 sm:px-2.5 sm:py-1 text-xs rounded-md bg-white/5 hover:bg-white/10 border border-white/10 text-white/80 hover:text-white transition-all shrink-0"
+            className={`flex items-center gap-1.5 p-1.5 sm:px-2.5 sm:py-1 text-xs rounded-md border transition-all shrink-0 ${
+              currentTheme === 'light'
+                ? 'bg-slate-100 hover:bg-slate-200 border-slate-300 text-slate-800'
+                : 'bg-white/5 hover:bg-white/10 border-white/10 text-white/80 hover:text-white'
+            }`}
           >
             {copied ? (
               <>
-                <Check className="w-3.5 h-3.5 text-emerald-400" />
-                <span className="hidden sm:inline text-[11px] text-emerald-400 font-semibold">{language === 'pt' ? 'Copiado!' : 'Copied!'}</span>
+                <Check className="w-3.5 h-3.5 text-emerald-500" />
+                <span className="hidden sm:inline text-[11px] text-emerald-500 font-semibold">{language === 'pt' ? 'Copiado!' : 'Copied!'}</span>
               </>
             ) : (
               <>
-                <Share2 className="w-3.5 h-3.5 text-white/70" />
+                <Share2 className="w-3.5 h-3.5" />
                 <span className="hidden md:inline text-[11px]">{language === 'pt' ? 'Compartilhar' : 'Share'}</span>
               </>
             )}
@@ -290,7 +318,9 @@ export const ExperienceNav: React.FC<ExperienceNavProps> = ({
 
           {/* Discreet language toggle */}
           {onToggleLanguage && (
-            <div className="flex items-center gap-1 p-0.5 rounded-full bg-black/40 border border-white/10 shrink-0">
+            <div className={`flex items-center gap-1 p-0.5 rounded-full border shrink-0 ${
+              currentTheme === 'light' ? 'bg-slate-100 border-slate-300' : 'bg-black/40 border-white/10'
+            }`}>
               <button
                 onClick={() => onToggleLanguage('pt')}
                 className={`px-2 py-0.5 text-[10px] rounded-full transition-all ${

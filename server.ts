@@ -1,4 +1,4 @@
-import express, { Request, Response } from 'express';
+import express from 'express';
 import { createServer as createViteServer } from 'vite';
 import { GoogleGenAI } from '@google/genai';
 import dotenv from 'dotenv';
@@ -25,65 +25,84 @@ const ai = new GoogleGenAI({
 async function startServer() {
   const app = express();
 
-  // Allow larger payload for audio base64 data
-  app.use(express.json({ limit: '25mb' }));
-
-  // Audio Transcription endpoint using model gemini-3.5-transcribe
-  app.post('/api/transcribe', async (req: Request, res: Response) => {
-    try {
-      const { audioBase64, mimeType = 'audio/webm' } = req.body;
-
-      if (!audioBase64) {
-        return res.status(400).json({ error: 'Nenhum áudio fornecido para transcrição.' });
-      }
-
-      if (!process.env.GEMINI_API_KEY) {
-        return res.status(500).json({
-          error: 'Chave GEMINI_API_KEY não configurada no servidor.',
-        });
-      }
-
-      // Normalize mimeType for Gemini API
-      let cleanMime = (mimeType || 'audio/webm').split(';')[0].trim().toLowerCase();
-      if (cleanMime === 'audio/m4a' || cleanMime === 'audio/x-m4a') {
-        cleanMime = 'audio/mp4';
-      } else if (cleanMime === 'audio/mp3') {
-        cleanMime = 'audio/mpeg';
-      }
-
-      const audioPart = {
-        inlineData: {
-          mimeType: cleanMime,
-          data: audioBase64,
-        },
-      };
-
-      const response = await ai.models.generateContent({
-        model: 'gemini-3.5-transcribe',
-        contents: [
-          audioPart,
-          'Transcreva este áudio de forma fiel e exata em português do Brasil. Retorne apenas o texto transcrito, sem introduções, aspas ou explicações adicionais.',
-        ],
-      });
-
-      const transcript = response.text?.trim() || '';
-      return res.json({ transcript });
-    } catch (error: any) {
-      console.warn('Aviso no processamento da transcrição de áudio:', error?.message);
-      return res.status(500).json({
-        error: error?.message || 'Falha ao processar a transcrição com Gemini 3.5 Transcribe.',
-      });
-    }
-  });
+  app.use(express.json({ limit: '5mb' }));
 
   app.get('/api/health', (_req, res) => {
-    res.json({ status: 'ok', model: 'gemini-3.5-transcribe' });
+    res.json({ status: 'ok' });
   });
 
   app.get('/api/maps-config', (_req, res) => {
     res.json({
       apiKey: process.env.VITE_GOOGLE_MAPS_API_KEY || process.env.GOOGLE_MAPS_API_KEY || '',
     });
+  });
+
+  // Google Maps Grounding via Gemini 4 Hydrogen (server-side)
+  app.post('/api/maps-grounding', async (req, res) => {
+    try {
+      const { query, lat, lng, locationName } = req.body as {
+        query?: string;
+        lat?: number;
+        lng?: number;
+        locationName?: string;
+      };
+
+      if (!query || typeof query !== 'string' || !query.trim()) {
+        return res.status(400).json({ error: 'Informe uma consulta de localização válida.' });
+      }
+
+      if (!process.env.GEMINI_API_KEY) {
+        return res.status(500).json({ error: 'Chave GEMINI_API_KEY não configurada no servidor.' });
+      }
+
+      const contextualPrompt = locationName
+        ? `Considerando a região de ${locationName} em Minas Gerais, Brasil: ${query.trim()}. Responda em português do Brasil de forma objetiva e útil para visitantes.`
+        : `${query.trim()}. Responda em português do Brasil de forma objetiva e útil.`;
+
+      const hasCoords = typeof lat === 'number' && typeof lng === 'number' && !Number.isNaN(lat) && !Number.isNaN(lng);
+
+      const response = await ai.models.generateContent({
+        model: 'gemini-4-hydrogen',
+        contents: contextualPrompt,
+        config: {
+          tools: [{ googleMaps: {} }],
+          ...(hasCoords
+            ? {
+                toolConfig: {
+                  retrievalConfig: {
+                    latLng: {
+                      latitude: lat,
+                      longitude: lng,
+                    },
+                  },
+                },
+              }
+            : {}),
+        },
+      });
+
+      const chunks = response.candidates?.[0]?.groundingMetadata?.groundingChunks || [];
+      const places = chunks
+        .filter((chunk: any) => chunk?.maps?.uri || chunk?.maps?.title)
+        .map((chunk: any) => ({
+          title: chunk.maps?.title || 'Local no Google Maps',
+          uri: chunk.maps?.uri || '',
+          reviewSnippets: (chunk.maps?.placeAnswerSources?.reviewSnippets || [])
+            .map((s: any) => s?.text || s?.reviewText || '')
+            .filter(Boolean)
+            .slice(0, 2),
+        }));
+
+      return res.json({
+        text: response.text || '',
+        places,
+      });
+    } catch (error: any) {
+      console.warn('Erro no Maps Grounding:', error?.message);
+      return res.status(500).json({
+        error: error?.message || 'Não foi possível consultar os dados atualizados do Google Maps.',
+      });
+    }
   });
 
   if (!isProduction) {
@@ -100,7 +119,7 @@ async function startServer() {
   }
 
   app.listen(PORT, '0.0.0.0', () => {
-    console.log(`🚀 Servidor rodando na porta ${PORT} com transcrição de áudio Gemini 3.5 Transcribe`);
+    console.log(`Servidor rodando na porta ${PORT}`);
   });
 }
 

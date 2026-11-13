@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { APIProvider, Map, AdvancedMarker, Pin, InfoWindow, useMap } from '@vis.gl/react-google-maps';
-import { MapPin, Navigation, Trophy, Sparkles, Building, ExternalLink, Compass } from 'lucide-react';
+import { MapPin, Navigation, Trophy, Sparkles, Building, ExternalLink, Compass, Search, Loader2 } from 'lucide-react';
 import { Language } from '../data/i18nData';
 
 export interface MapLocationItem {
@@ -194,12 +194,23 @@ function MapPanController({ target }: { target: MapLocationItem | null }) {
   return null;
 }
 
+interface GroundedPlace {
+  title: string;
+  uri: string;
+  reviewSnippets?: string[];
+}
+
 export const InteractiveCircuitMap: React.FC<InteractiveCircuitMapProps> = ({ language = 'pt' }) => {
   const [selectedFilter, setSelectedFilter] = useState<'all' | 'cavaleiro' | 'galo' | 'dev'>('all');
   const [activeLocation, setActiveLocation] = useState<MapLocationItem | null>(CIRCUIT_LOCATIONS[0]);
   const [apiKey, setApiKey] = useState<string>(
     (import.meta as any).env?.VITE_GOOGLE_MAPS_API_KEY || ''
   );
+  const [groundingQuery, setGroundingQuery] = useState('');
+  const [groundingLoading, setGroundingLoading] = useState(false);
+  const [groundingError, setGroundingError] = useState<string | null>(null);
+  const [groundingAnswer, setGroundingAnswer] = useState<string | null>(null);
+  const [groundingPlaces, setGroundingPlaces] = useState<GroundedPlace[]>([]);
 
   // If client env var is not set, attempt to retrieve provisioned key from server
   useEffect(() => {
@@ -225,10 +236,57 @@ export const InteractiveCircuitMap: React.FC<InteractiveCircuitMapProps> = ({ la
     setActiveLocation(loc);
   }, []);
 
+  const runMapsGrounding = useCallback(
+    async (customPrompt?: string) => {
+      const q = (customPrompt ?? groundingQuery).trim();
+      if (!q) return;
+      if (customPrompt) setGroundingQuery(customPrompt);
+
+      setGroundingLoading(true);
+      setGroundingError(null);
+
+      let coords = activeLocation?.position || { lat: -19.9678, lng: -44.1983 };
+      if (!activeLocation && typeof navigator !== 'undefined' && navigator.geolocation) {
+        try {
+          const pos = await new Promise<GeolocationPosition>((resolve, reject) =>
+            navigator.geolocation.getCurrentPosition(resolve, reject, { timeout: 2500 })
+          );
+          coords = { lat: pos.coords.latitude, lng: pos.coords.longitude };
+        } catch {
+          // Keep default Minas Gerais coordinates if geolocation is declined or unavailable
+        }
+      }
+
+      try {
+        const res = await fetch('/api/maps-grounding', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            query: q,
+            lat: coords.lat,
+            lng: coords.lng,
+            locationName: activeLocation ? `${activeLocation.name} (${activeLocation.city}, ${activeLocation.state})` : 'Minas Gerais',
+          }),
+        });
+        const data = await res.json();
+        if (!res.ok) {
+          throw new Error(data?.error || 'Erro ao buscar informações do Google Maps.');
+        }
+        setGroundingAnswer(data.text || '');
+        setGroundingPlaces(Array.isArray(data.places) ? data.places : []);
+      } catch (err: any) {
+        setGroundingError(err?.message || 'Não foi possível consultar o Google Maps agora.');
+      } finally {
+        setGroundingLoading(false);
+      }
+    },
+    [groundingQuery, activeLocation]
+  );
+
   return (
     <section id="mapa" className="py-16 sm:py-20 bg-gradient-to-b from-[#0a0705] via-[#110c08] to-[#070503] border-t border-[#3a2818]/60 relative overflow-hidden">
       {/* Ambient background glow */}
-      <div className="absolute top-1/4 left-1/2 -translate-x-1/2 w-[700px] h-[300px] bg-[#d4af37]/5 rounded-full blur-[140px] pointer-events-none" />
+      <div className="absolute top-1/4 left-1/2 -translate-x-1/2 w-[720px] h-[340px] bg-[radial-gradient(ellipse_at_center,rgba(212,175,55,0.08)_0%,transparent_70%)] pointer-events-none" />
 
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
         
@@ -282,12 +340,13 @@ export const InteractiveCircuitMap: React.FC<InteractiveCircuitMapProps> = ({ la
           
           {/* Left Column: Interactive Map */}
           <div className="lg:col-span-8 rounded-2xl overflow-hidden border border-[#d4af37]/40 shadow-2xl bg-black/80 relative">
-            <APIProvider
-              apiKey={apiKey}
-              libraries={['marker']}
-              language="pt-BR"
-              region="BR"
-            >
+            {apiKey ? (
+              <APIProvider
+                apiKey={apiKey}
+                libraries={['marker']}
+                language="pt-BR"
+                region="BR"
+              >
               <div className="w-full h-[450px] sm:h-[540px] relative">
                 <Map
                   mapId="DEMO_MAP_ID"
@@ -353,6 +412,28 @@ export const InteractiveCircuitMap: React.FC<InteractiveCircuitMapProps> = ({ la
                 </Map>
               </div>
             </APIProvider>
+            ) : (
+              <div className="w-full h-[450px] sm:h-[540px] flex flex-col items-center justify-center p-6 text-center bg-[#140e09]">
+                <MapPin className="w-10 h-10 text-[#d4af37] mb-3" />
+                <h3 className="text-lg font-serif-luxury font-bold text-white mb-2">
+                  {activeLocation ? activeLocation.name : 'Circuito Minas Gerais'}
+                </h3>
+                <p className="text-xs text-[#cfc2b2] max-w-md mb-4">
+                  {activeLocation?.highlight || 'Selecione um marco na lista ao lado para visualizar os detalhes e abrir a localização no Google Maps.'}
+                </p>
+                {activeLocation && (
+                  <a
+                    href={`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(activeLocation.gmapsQuery)}`}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="px-4 py-2 rounded-lg bg-[#d4af37] hover:bg-[#b8912e] text-black text-xs font-semibold inline-flex items-center gap-1.5 transition-colors"
+                  >
+                    <ExternalLink className="w-3.5 h-3.5" />
+                    <span>{language === 'pt' ? 'Abrir Local no Google Maps' : 'Open in Google Maps'}</span>
+                  </a>
+                )}
+              </div>
+            )}
 
             {/* Bottom floating helper info */}
             <div className="p-3 bg-black/90 border-t border-neutral-800 text-xs text-[#a89684] flex flex-wrap items-center justify-between gap-2">
@@ -434,6 +515,129 @@ export const InteractiveCircuitMap: React.FC<InteractiveCircuitMapProps> = ({ la
             })}
           </div>
 
+        </div>
+
+        {/* Google Maps Grounding Region Explorer (Gemini 4 Hydrogen + Google Maps) */}
+        <div className="mt-8 rounded-2xl bg-black/60 border border-[#d4af37]/30 p-5 sm:p-6 shadow-xl">
+          <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-4">
+            <div>
+              <h4 className="text-sm sm:text-base font-serif-luxury font-bold text-white flex items-center gap-2">
+                <MapPin className="w-4 h-4 text-[#d4af37]" />
+                <span>
+                  {language === 'pt'
+                    ? 'Guia Local Atualizado (Google Maps)'
+                    : 'Live Regional Guide (Google Maps)'}
+                </span>
+              </h4>
+              <p className="text-xs text-[#b8a795] mt-0.5">
+                {language === 'pt'
+                  ? `Pesquise restaurantes, pousadas ou parques próximos a ${activeLocation ? activeLocation.city : 'Minas Gerais'} com links oficiais do Google Maps.`
+                  : `Search nearby restaurants, stays, or venues around ${activeLocation ? activeLocation.city : 'Minas Gerais'} with official Google Maps links.`}
+              </p>
+            </div>
+
+            <div className="flex flex-wrap items-center gap-1.5">
+              {[
+                language === 'pt' ? 'Restaurantes típicos próximos' : 'Nearby restaurants',
+                language === 'pt' ? 'Hotéis e pousadas na cidade' : 'Nearby hotels',
+                language === 'pt' ? 'Parques e centros equestres' : 'Equestrian parks nearby',
+              ].map((preset) => (
+                <button
+                  key={preset}
+                  type="button"
+                  disabled={groundingLoading}
+                  onClick={() => runMapsGrounding(preset)}
+                  className="px-2.5 py-1 rounded-lg bg-[#18110b] hover:bg-[#241910] border border-[#4a3625] hover:border-[#d4af37] text-[11px] text-[#d9cbbe] transition-colors"
+                >
+                  {preset}
+                </button>
+              ))}
+            </div>
+          </div>
+
+          <form
+            onSubmit={(e) => {
+              e.preventDefault();
+              runMapsGrounding();
+            }}
+            className="flex flex-col sm:flex-row gap-2.5"
+          >
+            <input
+              type="text"
+              value={groundingQuery}
+              onChange={(e) => setGroundingQuery(e.target.value)}
+              placeholder={
+                language === 'pt'
+                  ? `Pergunte sobre locais perto de ${activeLocation ? activeLocation.city : 'Betim'}...`
+                  : `Ask about places near ${activeLocation ? activeLocation.city : 'Betim'}...`
+              }
+              className="flex-1 px-3.5 py-2.5 rounded-xl bg-neutral-950 border border-neutral-800 text-xs sm:text-sm text-white placeholder-neutral-500 focus:outline-none focus:border-[#d4af37]"
+            />
+            <button
+              type="submit"
+              disabled={groundingLoading || !groundingQuery.trim()}
+              className="px-5 py-2.5 rounded-xl bg-[#d4af37] hover:bg-[#c59b27] disabled:opacity-50 text-black text-xs font-bold uppercase tracking-wider flex items-center justify-center gap-2 transition-colors shrink-0"
+            >
+              {groundingLoading ? (
+                <>
+                  <Loader2 className="w-4 h-4 animate-spin" />
+                  <span>{language === 'pt' ? 'Consultando...' : 'Searching...'}</span>
+                </>
+              ) : (
+                <>
+                  <Search className="w-4 h-4" />
+                  <span>{language === 'pt' ? 'Consultar Mapa' : 'Search Maps'}</span>
+                </>
+              )}
+            </button>
+          </form>
+
+          {groundingError && (
+            <div className="mt-4 p-3 rounded-xl bg-red-950/50 border border-red-800/60 text-xs text-red-200">
+              {groundingError}
+            </div>
+          )}
+
+          {(groundingAnswer || groundingPlaces.length > 0) && (
+            <div className="mt-4 pt-4 border-t border-neutral-800/80 space-y-4">
+              {groundingAnswer && (
+                <div className="text-xs sm:text-sm text-[#e8dcce] leading-relaxed whitespace-pre-line">
+                  {groundingAnswer}
+                </div>
+              )}
+
+              {groundingPlaces.length > 0 && (
+                <div>
+                  <span className="block text-[11px] font-mono uppercase tracking-wider text-[#d4af37] mb-2">
+                    {language === 'pt' ? 'Locais Verificados no Google Maps' : 'Verified Google Maps Places'}
+                  </span>
+                  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2.5">
+                    {groundingPlaces.map((place, idx) => (
+                      <a
+                        key={`${place.title}-${idx}`}
+                        href={place.uri}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="p-3 rounded-xl bg-[#18110b] hover:bg-[#241910] border border-[#3f2b1b] hover:border-[#d4af37]/60 transition-all flex flex-col justify-between gap-1.5 group"
+                      >
+                        <div className="flex items-start justify-between gap-2">
+                          <span className="text-xs font-semibold text-white group-hover:text-[#d4af37] transition-colors">
+                            {place.title}
+                          </span>
+                          <ExternalLink className="w-3.5 h-3.5 text-[#d4af37] shrink-0 mt-0.5" />
+                        </div>
+                        {place.reviewSnippets && place.reviewSnippets.length > 0 && (
+                          <p className="text-[11px] text-[#b8a795] line-clamp-2 italic">
+                            “{place.reviewSnippets[0]}”
+                          </p>
+                        )}
+                      </a>
+                    ))}
+                  </div>
+                </div>
+              )}
+            </div>
+          )}
         </div>
 
       </div>

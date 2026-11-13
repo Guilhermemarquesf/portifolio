@@ -41,6 +41,21 @@
   -webkit-text-fill-color: transparent;
 }
 
+/* Specific title classes isolated from generic color-inversion rules */
+.header-brand-title {
+  color: rgba(255, 255, 255, 0.9);
+}
+
+.hero-main-title {
+  color: #ffffff;
+}
+
+.hero-main-title-accent {
+  background: linear-gradient(135deg, #f7e6b8 0%, #d4af37 40%, #b8912e 75%, #8c6a1e 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+
 /* Custom scrollbars */
 ::-webkit-scrollbar {
   width: 6px;
@@ -109,6 +124,15 @@ html.high-contrast .text-indigo-300 {
   color: #a5b4fc !important;
   font-weight: 700 !important;
 }
+html.high-contrast .hero-main-title,
+html.high-contrast .header-brand-title {
+  color: #ffffff !important;
+}
+html.high-contrast .hero-main-title-accent {
+  background: none !important;
+  -webkit-text-fill-color: #ffd700 !important;
+  color: #ffd700 !important;
+}
 html.high-contrast [class*="bg-[#1"],
 html.high-contrast [class*="bg-[#0"],
 html.high-contrast [class*="bg-neutral-9"],
@@ -129,62 +153,139 @@ html.light body {
 html.light .bg-\[\#060606\],
 html.light .bg-\[\#050505\],
 html.light .bg-\[\#080808\],
+html.light .bg-\[\#070b14\],
+html.light .bg-\[\#060913\],
+html.light .bg-\[\#090807\],
+html.light .bg-\[\#0a0806\],
 html.light .bg-\[\#110c08\],
 html.light .bg-\[\#0b1120\],
 html.light .bg-\[\#0e0c0a\],
-html.light .bg-\[\#0d0906\] {
+html.light .bg-\[\#0d0906\],
+html.light .bg-\[\#0c0805\] {
   background-color: #f8fafc !important;
   color: #0f172a !important;
 }
-html.light [class*="bg-[#1a120b]"],
-html.light [class*="bg-[#1b120a]"],
-html.light [class*="bg-[#1e140c]"],
-html.light [class*="bg-[#170f09]"],
-html.light [class*="bg-[#17100a]"],
-html.light [class*="bg-[#18110b]"],
-html.light [class*="bg-[#140e09]"],
+html.light [class*="bg-[#1a"],
+html.light [class*="bg-[#1b"],
+html.light [class*="bg-[#1e"],
+html.light [class*="bg-[#1f"],
+html.light [class*="bg-[#17"],
+html.light [class*="bg-[#18"],
+html.light [class*="bg-[#14"],
+html.light [class*="bg-[#15"],
+html.light [class*="bg-[#16"],
+html.light [class*="bg-[#21"],
+html.light [class*="bg-[#22"],
+html.light [class*="bg-[#24"],
+html.light [class*="bg-[#29"],
+html.light [class*="bg-[#2a"],
+html.light [class*="bg-[#2b"],
 html.light [class*="bg-neutral-900"],
 html.light [class*="bg-neutral-950"],
 html.light [class*="bg-slate-900"],
 html.light [class*="bg-slate-950"],
+html.light [class*="bg-[#0f0e0d]"],
 html.light [class*="bg-[#0d1527]"] {
   background-color: #ffffff !important;
-  box-shadow: 0 4px 18px -2px rgba(15, 23, 42, 0.06);
+  box-shadow: 0 4px 18px -2px rgba(15, 23, 42, 0.07);
+}
+html.light [class*="bg-black/40"],
+html.light [class*="bg-black/50"],
+html.light [class*="bg-black/60"] {
+  background-color: #f1f5f9 !important;
+}
+html.light [class*="bg-white/5"] {
+  background-color: #f1f5f9 !important;
+}
+html.light [class*="bg-white/10"] {
+  background-color: #e2e8f0 !important;
 }
 html.light [class*="border-[#"],
 html.light [class*="border-neutral-8"],
 html.light [class*="border-neutral-7"],
 html.light [class*="border-slate-8"],
-html.light [class*="border-slate-7"] {
-  border-color: #e2e8f0 !important;
+html.light [class*="border-slate-7"],
+html.light .border-white\/10,
+html.light .border-white\/15 {
+  border-color: #cbd5e1 !important;
+}
+html.light h1,
+html.light h2,
+html.light h3,
+html.light h4,
+html.light h5,
+html.light h6,
+html.light .header-brand-title,
+html.light .hero-main-title {
+  color: #1e293b !important;
 }
 html.light .text-white,
+html.light .text-white\/90,
+html.light .text-white\/80,
+html.light .text-white\/75,
+html.light .text-white\/70,
+html.light .text-slate-100,
+html.light .text-slate-200,
+html.light .text-neutral-200,
 html.light .text-\[\#f7f2ea\],
-html.light .text-\[\#f6f1ea\] {
-  color: #0f172a !important;
+html.light .text-\[\#f6f1ea\],
+html.light .text-\[\#f0e6d8\],
+html.light .text-\[\#f7efe4\],
+html.light .text-\[\#f3ece2\],
+html.light .text-\[\#e8dcce\] {
+  color: #1e293b !important;
 }
 html.light .text-neutral-300,
 html.light .text-slate-300,
 html.light .text-\[\#cfc2b2\],
+html.light .text-\[\#cfc2b0\],
 html.light .text-\[\#dfd5c7\],
-html.light .text-\[\#ded2c3\] {
+html.light .text-\[\#dfd4c5\],
+html.light .text-\[\#ded2c3\],
+html.light .text-\[\#d9cbbe\],
+html.light .text-\[\#d1c4b2\],
+html.light .text-\[\#c7b9a7\],
+html.light .text-\[\#c7b7a6\],
+html.light .text-\[\#c4b5a3\],
+html.light .text-\[\#c2b2a1\] {
   color: #334155 !important;
 }
 html.light .text-neutral-400,
+html.light .text-neutral-500,
 html.light .text-slate-400,
+html.light .text-slate-500,
 html.light .text-\[\#a38f7d\],
-html.light .text-\[\#a89584\] {
-  color: #64748b !important;
+html.light .text-\[\#a89584\],
+html.light .text-\[\#a89684\],
+html.light .text-\[\#9c8978\],
+html.light .text-\[\#b8a795\],
+html.light .text-\[\#8f7d6d\],
+html.light .text-\[\#8c7a6a\] {
+  color: #475569 !important;
+}
+html.light .text-\[\#d4af37\],
+html.light .text-amber-400 {
+  color: #9a6b12 !important;
+}
+html.light .text-gold-gradient,
+html.light .hero-main-title-accent {
+  background: linear-gradient(135deg, #6b4708 0%, #9a6d14 45%, #b8860b 80%, #5c3c05 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
 }
 html.light header {
-  background-color: rgba(255, 255, 255, 0.94) !important;
+  background-color: rgba(255, 255, 255, 0.96) !important;
   border-color: #e2e8f0 !important;
-  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.04);
+  box-shadow: 0 2px 10px rgba(15, 23, 42, 0.06);
+}
+html.light header a:hover,
+html.light header button:hover {
+  color: #0f172a !important;
 }
 html.light footer {
   background-color: rgba(255, 255, 255, 0.96) !important;
   border-color: #e2e8f0 !important;
-  box-shadow: 0 -4px 20px rgba(0, 0, 0, 0.06) !important;
+  box-shadow: 0 -4px 20px rgba(15, 23, 42, 0.06) !important;
 }
 html.light footer .text-white\/90 {
   color: #0f172a !important;
@@ -192,6 +293,21 @@ html.light footer .text-white\/90 {
 html.light footer .text-neutral-400,
 html.light footer .text-neutral-500 {
   color: #475569 !important;
+}
+/* Keep white/gold text legible inside dark image-overlay captions in Light Mode */
+html.light .photo-caption-overlay .text-white,
+html.light .photo-caption-overlay h3,
+html.light .photo-caption-overlay h4 {
+  color: #ffffff !important;
+}
+html.light .photo-caption-overlay p,
+html.light .photo-caption-overlay .text-neutral-300,
+html.light .photo-caption-overlay .text-neutral-400,
+html.light .photo-caption-overlay .text-\[\#d1c4b2\] {
+  color: #e2e8f0 !important;
+}
+html.light .photo-caption-overlay .text-\[\#d4af37\] {
+  color: #f4cf67 !important;
 }
 html.light .bg-black\/95 {
   background-color: #0a0a0a !important;

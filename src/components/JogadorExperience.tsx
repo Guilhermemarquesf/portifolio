@@ -37,7 +37,7 @@ export const JogadorExperience: React.FC<JogadorExperienceProps> = ({
   const [gallery, setGallery] = useState<FootballPhoto[]>(JOGADOR_DATA.gallery);
   const [activePhoto, setActivePhoto] = useState<FootballPhoto | null>(null);
   const [isUploadOpen, setIsUploadOpen] = useState(false);
-  const [filterTag, setFilterTag] = useState<string>('Todos');
+  const [filterTag, setFilterTag] = useState<'all' | 'Galo' | 'Campo' | 'Treino'>('all');
 
   const navSections = [
     { id: 'historia', label: t.nav.historia },
@@ -47,15 +47,21 @@ export const JogadorExperience: React.FC<JogadorExperienceProps> = ({
     { id: 'galeria', label: t.nav.galeria },
   ];
 
-  const tags = language === 'pt' ? ['Todos', 'Galo', 'Campo', 'Treino'] : ['All', 'Galo', 'Pitch', 'Training'];
+  const tags: { id: 'all' | 'Galo' | 'Campo' | 'Treino'; label: string }[] = [
+    { id: 'all', label: language === 'pt' ? 'Todos' : 'All' },
+    { id: 'Galo', label: 'Galo' },
+    { id: 'Campo', label: language === 'pt' ? 'Campo' : 'Pitch' },
+    { id: 'Treino', label: language === 'pt' ? 'Treino' : 'Training' },
+  ];
 
-  const filteredGallery = (filterTag === 'Todos' || filterTag === 'All')
+  const filteredGallery = filterTag === 'all'
     ? gallery
-    : gallery.filter((p) => {
-        if (filterTag === 'Pitch') return p.tag === 'Campo';
-        if (filterTag === 'Training') return p.tag === 'Treino';
-        return p.tag === filterTag;
-      });
+    : gallery.filter((p) => p.tag === filterTag);
+
+  const lightboxGallery =
+    activePhoto && filteredGallery.some((p) => p.id === activePhoto.id)
+      ? filteredGallery
+      : gallery;
 
   const handleAddCustomPhoto = (newPhoto: {
     id: string;
@@ -94,9 +100,9 @@ export const JogadorExperience: React.FC<JogadorExperienceProps> = ({
       {/* Hero / Minha História Section */}
       <section id="historia" className="relative pt-12 pb-20 md:pt-20 md:pb-28 overflow-hidden border-b border-neutral-800">
         
-        {/* Stadium Floodlight Visual Beam */}
-        <div className="absolute -top-32 left-1/2 -translate-x-1/2 w-[800px] h-[400px] bg-gradient-to-b from-white/10 to-transparent blur-[120px] pointer-events-none" />
-        <div className="absolute bottom-0 right-1/4 w-96 h-96 bg-emerald-600/10 rounded-full blur-[140px] pointer-events-none" />
+        {/* Stadium Floodlight Visual Beam (zero-blur CSS radial gradients) */}
+        <div className="absolute -top-32 left-1/2 -translate-x-1/2 w-[820px] h-[420px] bg-[radial-gradient(ellipse_at_top,rgba(255,255,255,0.10)_0%,transparent_70%)] pointer-events-none" />
+        <div className="absolute bottom-0 right-1/4 w-[420px] h-[420px] bg-[radial-gradient(circle_at_center,rgba(16,185,129,0.10)_0%,transparent_70%)] pointer-events-none" />
 
         {/* Pitch line subtle pattern */}
         <div className="absolute inset-0 opacity-[0.02] pointer-events-none bg-[linear-gradient(to_right,#ffffff_1px,transparent_1px),linear-gradient(to_bottom,#ffffff_1px,transparent_1px)] bg-[size:4rem_4rem]" />
@@ -174,13 +180,14 @@ export const JogadorExperience: React.FC<JogadorExperienceProps> = ({
                     alt="Estádio com atmosfera noturna e torcida apaixonada"
                     domainTheme="football"
                     objectFit="contain"
+                    priority
                     className="w-full h-full max-h-full group-hover:scale-105 transition-transform duration-700 ease-out"
                   />
                 </div>
 
                 <div className="absolute inset-0 bg-gradient-to-t from-black via-black/20 to-transparent pointer-events-none" />
 
-                <div className="absolute bottom-6 left-6 right-6 flex items-end justify-between">
+                <div className="absolute bottom-6 left-6 right-6 flex items-end justify-between photo-caption-overlay">
                   <div>
                     <span className="text-xs uppercase tracking-widest text-emerald-400 font-sport font-bold">
                       {t.hero.photoTag}
@@ -353,7 +360,7 @@ export const JogadorExperience: React.FC<JogadorExperienceProps> = ({
                   />
                 </div>
                 <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/20 to-transparent pointer-events-none" />
-                <div className="absolute bottom-6 left-6 right-6">
+                <div className="absolute bottom-6 left-6 right-6 photo-caption-overlay">
                   <span className="text-xs uppercase tracking-widest text-emerald-400 font-sport font-bold">
                     Estilo de Jogo
                   </span>
@@ -445,28 +452,24 @@ export const JogadorExperience: React.FC<JogadorExperienceProps> = ({
                 <span>Adicionar Minha Foto / Vídeo</span>
               </button>
 
-              <div className="flex items-center gap-1 p-1 bg-neutral-900 border border-neutral-800 rounded-lg">
+              <div className="flex items-center gap-1 p-1 bg-neutral-900 border border-neutral-800 rounded-lg flex-wrap">
                 {tags.map((tag) => {
-                  const count = (tag === 'Todos' || tag === 'All')
+                  const count = tag.id === 'all'
                     ? gallery.length
-                    : tag === 'Pitch'
-                    ? gallery.filter((p) => p.tag === 'Campo').length
-                    : tag === 'Training'
-                    ? gallery.filter((p) => p.tag === 'Treino').length
-                    : gallery.filter((p) => p.tag === tag).length;
+                    : gallery.filter((p) => p.tag === tag.id).length;
                   return (
                     <button
-                      key={tag}
-                      onClick={() => setFilterTag(tag)}
+                      key={tag.id}
+                      onClick={() => setFilterTag(tag.id)}
                       className={`px-3 py-1.5 text-xs font-sport uppercase rounded-md transition-colors flex items-center gap-1.5 ${
-                        filterTag === tag
+                        filterTag === tag.id
                           ? 'bg-emerald-500 text-black font-bold shadow-sm'
                           : 'text-neutral-400 hover:text-white'
                       }`}
                     >
-                      <span>{tag}</span>
-                      <span className={`text-[10px] px-1.5 py-0.2 rounded-full ${
-                        filterTag === tag ? 'bg-black/20 text-black font-bold' : 'bg-black/50 text-neutral-300'
+                      <span>{tag.label}</span>
+                      <span className={`text-[10px] px-1.5 py-0.5 rounded-full ${
+                        filterTag === tag.id ? 'bg-black/20 text-black font-bold' : 'bg-black/50 text-neutral-300'
                       }`}>
                         {count}
                       </span>
@@ -560,22 +563,22 @@ export const JogadorExperience: React.FC<JogadorExperienceProps> = ({
           category={activePhoto.tag}
           year={activePhoto.year}
           theme="football"
-          currentIndex={filteredGallery.findIndex((p) => p.id === activePhoto.id)}
-          totalPhotos={filteredGallery.length}
-          hasNext={filteredGallery.length > 1}
-          hasPrev={filteredGallery.length > 1}
+          currentIndex={lightboxGallery.findIndex((p) => p.id === activePhoto.id)}
+          totalPhotos={lightboxGallery.length}
+          hasNext={lightboxGallery.length > 1}
+          hasPrev={lightboxGallery.length > 1}
           onNext={() => {
-            const idx = filteredGallery.findIndex((p) => p.id === activePhoto.id);
+            const idx = lightboxGallery.findIndex((p) => p.id === activePhoto.id);
             if (idx !== -1) {
-              const nextIdx = (idx + 1) % filteredGallery.length;
-              setActivePhoto(filteredGallery[nextIdx]);
+              const nextIdx = (idx + 1) % lightboxGallery.length;
+              setActivePhoto(lightboxGallery[nextIdx]);
             }
           }}
           onPrev={() => {
-            const idx = filteredGallery.findIndex((p) => p.id === activePhoto.id);
+            const idx = lightboxGallery.findIndex((p) => p.id === activePhoto.id);
             if (idx !== -1) {
-              const prevIdx = (idx - 1 + filteredGallery.length) % filteredGallery.length;
-              setActivePhoto(filteredGallery[prevIdx]);
+              const prevIdx = (idx - 1 + lightboxGallery.length) % lightboxGallery.length;
+              setActivePhoto(lightboxGallery[prevIdx]);
             }
           }}
         />

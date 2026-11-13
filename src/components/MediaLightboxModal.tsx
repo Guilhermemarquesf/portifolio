@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useRef } from 'react';
 import { X, Calendar, MapPin, Tag, ChevronLeft, ChevronRight, ZoomIn, ZoomOut, Heart, Share2, Check, Shield, Code2, Trophy } from 'lucide-react';
 import { ImageWithFallback } from './ImageWithFallback';
 
@@ -40,11 +40,18 @@ export const MediaLightboxModal: React.FC<MediaLightboxModalProps> = ({
   const [isZoomed, setIsZoomed] = useState(false);
   const [liked, setLiked] = useState(false);
   const [copied, setCopied] = useState(false);
+  const copyTimerRef = useRef<number | null>(null);
 
   useEffect(() => {
     setIsZoomed(false);
     setLiked(false);
   }, [imageUrl]);
+
+  useEffect(() => {
+    return () => {
+      if (copyTimerRef.current) window.clearTimeout(copyTimerRef.current);
+    };
+  }, []);
 
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
@@ -64,10 +71,15 @@ export const MediaLightboxModal: React.FC<MediaLightboxModalProps> = ({
 
   if (!isOpen) return null;
 
-  const handleShare = () => {
-    navigator.clipboard.writeText(window.location.href);
-    setCopied(true);
-    setTimeout(() => setCopied(false), 2000);
+  const handleShare = async () => {
+    try {
+      await navigator.clipboard.writeText(window.location.href);
+      setCopied(true);
+      if (copyTimerRef.current) window.clearTimeout(copyTimerRef.current);
+      copyTimerRef.current = window.setTimeout(() => setCopied(false), 2000);
+    } catch {
+      // Ignore clipboard permission errors cleanly
+    }
   };
 
   const getBorderColor = () => {
@@ -86,7 +98,7 @@ export const MediaLightboxModal: React.FC<MediaLightboxModalProps> = ({
     <div
       role="dialog"
       aria-modal="true"
-      className="fixed inset-0 z-50 flex items-center justify-center p-2 sm:p-4 md:p-6 bg-black/95 backdrop-blur-md"
+      className="fixed inset-0 z-50 flex items-center justify-center p-2 sm:p-4 md:p-6 bg-black/95"
       onClick={onClose}
     >
       <div
@@ -95,8 +107,8 @@ export const MediaLightboxModal: React.FC<MediaLightboxModalProps> = ({
       >
         {/* Top bar controls */}
         <div className="absolute top-3 right-3 z-30 flex items-center gap-2">
-          {typeof currentIndex === 'number' && typeof totalPhotos === 'number' && (
-            <span className="text-[11px] font-semibold px-2.5 py-1 rounded-full bg-black/80 border border-white/20 text-white/90 backdrop-blur-sm">
+          {typeof currentIndex === 'number' && currentIndex >= 0 && typeof totalPhotos === 'number' && totalPhotos > 0 && (
+            <span className="text-[11px] font-semibold px-2.5 py-1 rounded-full bg-black/85 border border-white/20 text-white/90">
               {currentIndex + 1} / {totalPhotos}
             </span>
           )}

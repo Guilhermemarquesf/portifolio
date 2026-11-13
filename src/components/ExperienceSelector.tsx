@@ -14,7 +14,8 @@ import {
   Contrast, 
   Search, 
   Share2, 
-  Check 
+  Check,
+  Box
 } from 'lucide-react';
 import { useAccessibility } from '../context/ThemeAccessibilityContext';
 
@@ -31,7 +32,7 @@ export const ExperienceSelector: React.FC<ExperienceSelectorProps> = ({
 }) => {
   const [hoveredCard, setHoveredCard] = useState<string | null>(null);
   const [copied, setCopied] = useState(false);
-  const { theme, toggleTheme, highContrast, toggleHighContrast, setIsSearchOpen } = useAccessibility();
+  const { theme, toggleTheme, highContrast, toggleHighContrast, setIsSearchOpen, open3DStudio } = useAccessibility();
   const t = I18N[language].home;
 
   const cards = [
@@ -88,36 +89,56 @@ export const ExperienceSelector: React.FC<ExperienceSelectorProps> = ({
   return (
     <main className="relative min-h-screen bg-[#060606] text-white flex flex-col justify-between items-center px-4 sm:px-6 md:px-10 py-8 sm:py-12 md:py-14 overflow-hidden selection:bg-[#d4af37] selection:text-black">
       
-      {/* Warm Golden Ambient Spotlights */}
+      {/* Warm Golden Ambient Spotlights (zero-blur CSS radial gradients for 60fps rendering) */}
       <div className="absolute inset-0 pointer-events-none overflow-hidden">
-        {/* Top subtle golden backlight */}
-        <div className="absolute -top-32 left-1/2 -translate-x-1/2 w-[750px] h-[450px] bg-[#d4af37]/10 rounded-full blur-[160px]" />
-        
-        {/* Bottom right warm golden glow */}
-        <div className="absolute -bottom-24 -right-24 w-[600px] h-[600px] bg-[#9e7a2b]/15 rounded-full blur-[180px]" />
-        
-        {/* Bottom left warm glow */}
-        <div className="absolute -bottom-24 -left-24 w-[500px] h-[500px] bg-[#735518]/10 rounded-full blur-[160px]" />
+        <div className="absolute -top-32 left-1/2 -translate-x-1/2 w-[780px] h-[480px] bg-[radial-gradient(ellipse_at_center,rgba(212,175,55,0.12)_0%,transparent_70%)]" />
+        <div className="absolute -bottom-24 -right-24 w-[620px] h-[620px] bg-[radial-gradient(circle_at_center,rgba(158,122,43,0.14)_0%,transparent_70%)]" />
+        <div className="absolute -bottom-24 -left-24 w-[520px] h-[520px] bg-[radial-gradient(circle_at_center,rgba(115,85,24,0.10)_0%,transparent_70%)]" />
       </div>
 
-      {/* Top Header: Search, Contrast, Theme, Share & Language */}
-      <header className="relative z-20 w-full max-w-6xl flex items-center justify-between gap-3 flex-wrap sm:flex-nowrap">
-        <div className="flex items-center gap-2 text-xs text-neutral-500 font-mono tracking-wider">
-          <span className="w-1.5 h-1.5 rounded-full bg-[#d4af37]" />
-          <span className="text-white/80 font-bold">GUILHERME M. FERREIRA</span>
+      {/* Top Header: Search, 3D Studio, Contrast, Theme, Share & Language */}
+      <header className="relative z-20 w-full max-w-6xl px-3 sm:px-4 py-2.5 rounded-2xl flex items-center justify-between gap-3 flex-wrap sm:flex-nowrap">
+        <div className="flex items-center gap-2 text-xs font-mono tracking-wider">
+          <span className="w-2 h-2 rounded-full bg-[#d4af37] shrink-0" />
+          <span className="font-bold header-brand-title">
+            GUILHERME M. FERREIRA
+          </span>
         </div>
 
         <div className="flex items-center gap-2 flex-wrap">
+          {/* Interactive 3D Studio Button */}
+          <button
+            onClick={() => open3DStudio('cavalo')}
+            aria-label={language === 'pt' ? 'Abrir Estúdio 3D Interativo' : 'Open Interactive 3D Studio'}
+            title={language === 'pt' ? 'Explorar Troféus & Núcleo em 3D (Three.js)' : 'Explore 3D Showcase (Three.js)'}
+            className={`flex items-center gap-1.5 p-1.5 sm:px-3 sm:py-1 text-xs rounded-full border transition-all shadow-sm font-semibold ${
+              theme === 'light'
+                ? 'bg-amber-50 hover:bg-amber-100 border-amber-300 text-amber-900'
+                : 'bg-[#d4af37]/15 hover:bg-[#d4af37]/25 border-[#d4af37]/40 text-[#f3dfb0]'
+            }`}
+          >
+            <Box className="w-3.5 h-3.5 text-[#d4af37]" />
+            <span className="hidden sm:inline text-[11px]">
+              {language === 'pt' ? 'Estúdio 3D' : '3D Studio'}
+            </span>
+          </button>
+
           {/* Quick Search */}
           <button
             onClick={() => setIsSearchOpen(true)}
             aria-label={language === 'pt' ? 'Busca rápida (Ctrl+K)' : 'Quick search (Ctrl+K)'}
             title={language === 'pt' ? 'Buscar no portfólio (Ctrl+K)' : 'Search portfolio (Ctrl+K)'}
-            className="flex items-center gap-1.5 p-1.5 sm:px-2.5 sm:py-1 text-xs rounded-full bg-neutral-900/90 hover:bg-neutral-800 border border-neutral-800 text-white/80 hover:text-white transition-all shadow-sm"
+            className={`flex items-center gap-1.5 p-1.5 sm:px-2.5 sm:py-1 text-xs rounded-full border transition-all shadow-sm ${
+              theme === 'light'
+                ? 'bg-slate-100 hover:bg-slate-200 border-slate-300 text-slate-800'
+                : 'bg-neutral-900/90 hover:bg-neutral-800 border-neutral-800 text-white/80 hover:text-white'
+            }`}
           >
-            <Search className="w-3.5 h-3.5 text-neutral-400" />
+            <Search className="w-3.5 h-3.5" />
             <span className="hidden sm:inline text-[11px]">{language === 'pt' ? 'Buscar' : 'Search'}</span>
-            <kbd className="hidden md:inline text-[9px] px-1 py-0.2 bg-black/50 border border-white/10 rounded text-neutral-400 font-mono">
+            <kbd className={`hidden md:inline text-[9px] px-1 py-0.5 rounded font-mono border ${
+              theme === 'light' ? 'bg-white border-slate-300 text-slate-600' : 'bg-black/50 border-white/10 text-neutral-400'
+            }`}>
               ⌘K
             </kbd>
           </button>
@@ -134,6 +155,8 @@ export const ExperienceSelector: React.FC<ExperienceSelectorProps> = ({
             className={`flex items-center gap-1.5 p-1.5 sm:px-2.5 sm:py-1 text-xs rounded-full border transition-all shadow-sm ${
               highContrast
                 ? 'bg-yellow-400 text-black border-yellow-300 font-bold shadow-[0_0_15px_rgba(250,204,21,0.4)]'
+                : theme === 'light'
+                ? 'bg-slate-100 hover:bg-slate-200 border-slate-300 text-slate-800'
                 : 'bg-neutral-900/90 hover:bg-neutral-800 border-neutral-800 text-white/80 hover:text-white'
             }`}
           >
@@ -179,23 +202,29 @@ export const ExperienceSelector: React.FC<ExperienceSelectorProps> = ({
               setTimeout(() => setCopied(false), 2000);
             }}
             title={language === 'pt' ? 'Copiar link do portfólio' : 'Copy portfolio link'}
-            className="flex items-center gap-1.5 p-1.5 sm:px-2.5 sm:py-1 text-xs rounded-full bg-neutral-900/90 hover:bg-neutral-800 border border-neutral-800 text-white/80 hover:text-white transition-all shadow-sm"
+            className={`flex items-center gap-1.5 p-1.5 sm:px-2.5 sm:py-1 text-xs rounded-full border transition-all shadow-sm ${
+              theme === 'light'
+                ? 'bg-slate-100 hover:bg-slate-200 border-slate-300 text-slate-800'
+                : 'bg-neutral-900/90 hover:bg-neutral-800 border-neutral-800 text-white/80 hover:text-white'
+            }`}
           >
             {copied ? (
               <>
-                <Check className="w-3.5 h-3.5 text-emerald-400" />
-                <span className="hidden sm:inline text-[11px] text-emerald-400 font-semibold">{language === 'pt' ? 'Copiado!' : 'Copied!'}</span>
+                <Check className="w-3.5 h-3.5 text-emerald-500" />
+                <span className="hidden sm:inline text-[11px] text-emerald-500 font-semibold">{language === 'pt' ? 'Copiado!' : 'Copied!'}</span>
               </>
             ) : (
               <>
-                <Share2 className="w-3.5 h-3.5 text-neutral-300" />
+                <Share2 className="w-3.5 h-3.5" />
                 <span className="hidden md:inline text-[11px]">{language === 'pt' ? 'Compartilhar' : 'Share'}</span>
               </>
             )}
           </button>
 
           {/* Discreet Language Toggle (PT / EN) */}
-          <div className="flex items-center gap-1.5 p-1 rounded-full bg-neutral-900/90 border border-neutral-800/80 backdrop-blur-md shadow-sm">
+          <div className={`flex items-center gap-1.5 p-1 rounded-full border shadow-sm ${
+            theme === 'light' ? 'bg-slate-100 border-slate-300' : 'bg-neutral-900 border-neutral-800/80'
+          }`}>
             <Globe className="w-3.5 h-3.5 text-neutral-400 ml-1.5 shrink-0" />
             <button
               onClick={() => onToggleLanguage('pt')}
@@ -251,13 +280,13 @@ export const ExperienceSelector: React.FC<ExperienceSelectorProps> = ({
           }}
           className="flex flex-col items-center leading-[0.92] sm:leading-[0.9] select-none mb-6 sm:mb-8"
         >
-          <span className="font-display-serif uppercase text-white tracking-tight font-normal text-5xl sm:text-7xl md:text-8xl lg:text-[6.8rem]">
+          <span className="font-display-serif uppercase hero-main-title tracking-tight font-normal text-5xl sm:text-7xl md:text-8xl lg:text-[6.8rem]">
             GUILHERME
           </span>
-          <span className="font-display-serif italic text-gold-gradient font-normal text-5xl sm:text-7xl md:text-8xl lg:text-[6.8rem] my-0.5">
+          <span className="font-display-serif italic hero-main-title-accent font-normal text-5xl sm:text-7xl md:text-8xl lg:text-[6.8rem] my-0.5">
             MARQUES
           </span>
-          <span className="font-display-serif uppercase text-white tracking-tight font-normal text-5xl sm:text-7xl md:text-8xl lg:text-[6.8rem]">
+          <span className="font-display-serif uppercase hero-main-title tracking-tight font-normal text-5xl sm:text-7xl md:text-8xl lg:text-[6.8rem]">
             FERREIRA
           </span>
         </motion.div>

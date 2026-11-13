@@ -7,10 +7,11 @@ import {
   FootballMoment,
   FootballPhoto,
 } from '../types';
+import devWorkspaceImg from '../assets/images/dev_workspace_moderno_1794012510144.jpg';
 
 // Imagens geradas com alta fidelidade
 export const IMAGES = {
-  devWorkspace: '/src/assets/images/dev_workspace_moderno_1794012510144.jpg',
+  devWorkspace: devWorkspaceImg,
   horseMarchador: '/assets/aistudio/WhatsApp_Image_2026-11-07_at_00.02.27__2__d3c403b5.jpeg',
   equestrianTrophies: '/assets/aistudio/WhatsApp_Image_2026-11-06_at_23.36.31__3__9fc272e5.jpeg',
   footballStadium: '/assets/aistudio/WhatsApp_Image_2026-11-08_at_13.18.38__2__7c605241.jpeg',

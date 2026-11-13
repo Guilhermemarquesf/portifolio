@@ -1,4 +1,5 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
+import { ExhibitId } from '../three/proceduralScenes';
 
 export type ThemeMode = 'dark' | 'light';
 export type FontSizeScale = 'normal' | 'large' | 'larger';
@@ -16,6 +17,10 @@ interface ThemeAccessibilityContextType {
   resetFontSize: () => void;
   isSearchOpen: boolean;
   setIsSearchOpen: (open: boolean) => void;
+  is3DStudioOpen: boolean;
+  threeExhibit: ExhibitId;
+  open3DStudio: (exhibit?: ExhibitId) => void;
+  close3DStudio: () => void;
 }
 
 const ThemeAccessibilityContext = createContext<ThemeAccessibilityContextType | undefined>(undefined);
@@ -49,6 +54,8 @@ export const ThemeAccessibilityProvider: React.FC<{ children: React.ReactNode }>
   });
 
   const [isSearchOpen, setIsSearchOpen] = useState(false);
+  const [is3DStudioOpen, setIs3DStudioOpen] = useState(false);
+  const [threeExhibit, setThreeExhibit] = useState<ExhibitId>('cavalo');
 
   // Apply classes to document.documentElement
   useEffect(() => {
@@ -147,6 +154,15 @@ export const ThemeAccessibilityProvider: React.FC<{ children: React.ReactNode }>
     setFontSizeState('normal');
   };
 
+  const open3DStudio = (exhibit: ExhibitId = 'cavalo') => {
+    setThreeExhibit(exhibit);
+    setIs3DStudioOpen(true);
+  };
+
+  const close3DStudio = () => {
+    setIs3DStudioOpen(false);
+  };
+
   return (
     <ThemeAccessibilityContext.Provider
       value={{
@@ -162,6 +178,10 @@ export const ThemeAccessibilityProvider: React.FC<{ children: React.ReactNode }>
         resetFontSize,
         isSearchOpen,
         setIsSearchOpen,
+        is3DStudioOpen,
+        threeExhibit,
+        open3DStudio,
+        close3DStudio,
       }}
     >
       {children}

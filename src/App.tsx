@@ -3,7 +3,7 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { ExperienceType } from './types';
 import { Language } from './data/i18nData';
 import { ExperienceSelector } from './components/ExperienceSelector';
@@ -15,12 +15,13 @@ import { GlobalFooter } from './components/GlobalFooter';
 import { ThemeAccessibilityProvider, useAccessibility } from './context/ThemeAccessibilityContext';
 import { AccessibilityControls } from './components/AccessibilityControls';
 import { QuickSearchModal } from './components/QuickSearchModal';
+import { ThreeStudioModal } from './components/ThreeStudioModal';
 
 function AppContent() {
   const [experience, setExperience] = useState<ExperienceType>('home');
   const [language, setLanguage] = useState<Language>('pt');
   const [quotaExceeded, setQuotaExceeded] = useState(false);
-  const { isSearchOpen, setIsSearchOpen } = useAccessibility();
+  const { isSearchOpen, setIsSearchOpen, is3DStudioOpen, threeExhibit, close3DStudio } = useAccessibility();
 
   // Listen for Google Maps quota events (Tier 1 & Tier 2 defense)
   useEffect(() => {
@@ -34,7 +35,9 @@ function AppContent() {
     document.documentElement.lang = language === 'pt' ? 'pt-BR' : 'en';
   }, [language]);
 
-  // Sync with URL hash for shareable direct links (e.g., #dev, #cavaleiro, #jogador, #vida)
+  const navTimerRef = useRef<number | null>(null);
+
+  // Sync with URL hash and browser history navigation (Back/Forward)
   useEffect(() => {
     const handleHashChange = () => {
       const rawHash = window.location.hash.replace('#', '');
@@ -42,15 +45,13 @@ function AppContent() {
         setExperience('home');
         return;
       }
-      
+
       const validExperiences: ExperienceType[] = ['dev', 'cavaleiro', 'jogador', 'vida'];
       if (validExperiences.includes(rawHash as ExperienceType)) {
         setExperience(rawHash as ExperienceType);
         return;
       }
 
-      // If the hash is an in-page section anchor (e.g. #conquistas, #projetos, #galeria),
-      // keep the current experience active and smoothly scroll to the section.
       const el = document.getElementById(rawHash);
       if (el) {
         el.scrollIntoView({ behavior: 'smooth' });
@@ -59,10 +60,20 @@ function AppContent() {
 
     handleHashChange();
     window.addEventListener('hashchange', handleHashChange);
-    return () => window.removeEventListener('hashchange', handleHashChange);
+    window.addEventListener('popstate', handleHashChange);
+    return () => {
+      window.removeEventListener('hashchange', handleHashChange);
+      window.removeEventListener('popstate', handleHashChange);
+      if (navTimerRef.current) window.clearTimeout(navTimerRef.current);
+    };
   }, []);
 
   const navigateTo = (newExp: ExperienceType, sectionId?: string) => {
+    if (navTimerRef.current) {
+      window.clearTimeout(navTimerRef.current);
+      navTimerRef.current = null;
+    }
+
     setExperience(newExp);
     if (newExp === 'home') {
       window.history.pushState(null, '', window.location.pathname);
@@ -71,7 +82,8 @@ function AppContent() {
     }
 
     if (sectionId) {
-      setTimeout(() => {
+      navTimerRef.current = window.setTimeout(() => {
+        navTimerRef.current = null;
         const el = document.getElementById(sectionId);
         if (el) {
           el.scrollIntoView({ behavior: 'smooth' });
@@ -155,6 +167,13 @@ function AppContent() {
         onClose={() => setIsSearchOpen(false)}
         onSelectExperience={navigateTo}
         language={language}
+      />
+
+      {/* Interactive Three.js 3D Studio Modal */}
+      <ThreeStudioModal
+        isOpen={is3DStudioOpen}
+        onClose={close3DStudio}
+        initialExhibit={threeExhibit}
       />
 
       {/* Rodapé Fixo e Elegante em todas as telas */}

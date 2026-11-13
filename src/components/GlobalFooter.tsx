@@ -96,10 +96,10 @@ export const GlobalFooter: React.FC<GlobalFooterProps> = ({
     <footer 
       role="contentinfo"
       aria-label="Rodapé global"
-      className="fixed bottom-0 left-0 right-0 z-40 bg-[#050507]/92 backdrop-blur-md border-t border-neutral-800/80 shadow-[0_-6px_25px_rgba(0,0,0,0.85)]"
+      className="fixed bottom-0 left-0 right-0 z-40 bg-[#050507]/95 border-t border-neutral-800/80 shadow-[0_-6px_25px_rgba(0,0,0,0.85)]"
     >
-      {/* Subtle multi-identity gradient accent line at the top border */}
-      <div className="h-[1px] w-full bg-gradient-to-r from-transparent via-[#d4af37]/50 via-indigo-500/40 via-emerald-500/40 to-transparent" />
+      {/* Subtle golden accent line at the top border */}
+      <div className="h-[1px] w-full bg-gradient-to-r from-transparent via-[#d4af37]/50 to-transparent" />
 
       <div className="max-w-7xl mx-auto px-3 sm:px-6 py-2.5 flex items-center justify-between gap-3 text-xs">
         

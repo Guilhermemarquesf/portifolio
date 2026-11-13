@@ -23,10 +23,12 @@ import {
   Star,
   LayoutGrid,
   ListOrdered,
+  Box,
 } from 'lucide-react';
 
 import { Language, I18N } from '../data/i18nData';
 import { InteractiveCircuitMap } from './InteractiveCircuitMap';
+import { useAccessibility } from '../context/ThemeAccessibilityContext';
 
 interface CavaleiroExperienceProps {
   onNavigate: (exp: ExperienceType) => void;
@@ -40,10 +42,11 @@ export const CavaleiroExperience: React.FC<CavaleiroExperienceProps> = ({
   onToggleLanguage,
 }) => {
   const t = I18N[language].cavaleiro;
+  const { open3DStudio } = useAccessibility();
   const [gallery, setGallery] = useState<EquestrianPhoto[]>(CAVALEIRO_DATA.gallery);
   const [activePhoto, setActivePhoto] = useState<EquestrianPhoto | null>(null);
   const [isUploadOpen, setIsUploadOpen] = useState(false);
-  const [filterCategory, setFilterCategory] = useState<string>('Todos');
+  const [filterCategory, setFilterCategory] = useState<'all' | 'Marchador' | 'Competições' | 'Haras GMF'>('all');
   const [achievementFilter, setAchievementFilter] = useState<'todos' | 'destaques' | 'copas' | 'trofeus'>('todos');
   const [achievementView, setAchievementView] = useState<'grade' | 'cronologia'>('grade');
 
@@ -58,16 +61,21 @@ export const CavaleiroExperience: React.FC<CavaleiroExperienceProps> = ({
     { id: 'paixao', label: t.nav.paixao },
   ];
 
-  const categories = language === 'pt'
-    ? ['Todos', 'Marchador', 'Competições', 'Haras GMF']
-    : ['All', 'Marchador', 'Competitions', 'Haras GMF'];
+  const categories: { id: 'all' | 'Marchador' | 'Competições' | 'Haras GMF'; label: string }[] = [
+    { id: 'all', label: language === 'pt' ? 'Todos' : 'All' },
+    { id: 'Marchador', label: 'Marchador' },
+    { id: 'Competições', label: language === 'pt' ? 'Competições' : 'Competitions' },
+    { id: 'Haras GMF', label: 'Haras GMF' },
+  ];
 
-  const filteredGallery = (filterCategory === 'Todos' || filterCategory === 'All')
+  const filteredGallery = filterCategory === 'all'
     ? gallery
-    : gallery.filter((p) => {
-        if (filterCategory === 'Competitions') return p.category === 'Competições';
-        return p.category === filterCategory;
-      });
+    : gallery.filter((p) => p.category === filterCategory);
+
+  const lightboxGallery =
+    activePhoto && filteredGallery.some((p) => p.id === activePhoto.id)
+      ? filteredGallery
+      : gallery;
 
   const handleAddCustomPhoto = (newPhoto: {
     id: string;
@@ -102,9 +110,9 @@ export const CavaleiroExperience: React.FC<CavaleiroExperienceProps> = ({
       {/* Hero / Minha História Section */}
       <section id="historia" className="relative pt-12 pb-20 md:pt-20 md:pb-28 overflow-hidden border-b border-[#382618]">
         
-        {/* Ambient warm amber glow */}
-        <div className="absolute top-10 left-1/4 w-[500px] h-[500px] bg-[#c59b27]/10 rounded-full blur-[140px] pointer-events-none" />
-        <div className="absolute bottom-0 right-10 w-96 h-96 bg-[#8c5825]/15 rounded-full blur-[120px] pointer-events-none" />
+        {/* Ambient warm amber glow (zero-blur CSS radial gradients) */}
+        <div className="absolute top-10 left-1/4 w-[540px] h-[540px] bg-[radial-gradient(circle_at_center,rgba(197,155,39,0.10)_0%,transparent_70%)] pointer-events-none" />
+        <div className="absolute bottom-0 right-10 w-[420px] h-[420px] bg-[radial-gradient(circle_at_center,rgba(140,88,37,0.14)_0%,transparent_70%)] pointer-events-none" />
 
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
           
@@ -193,6 +201,13 @@ export const CavaleiroExperience: React.FC<CavaleiroExperienceProps> = ({
                   <Crown className="w-4 h-4 text-[#d4af37]" />
                   <span>{t.hero.btnGallery}</span>
                 </a>
+                <button
+                  onClick={() => open3DStudio('cavalo')}
+                  className="px-5 py-3 rounded-lg bg-[#25180e] hover:bg-[#342213] border border-[#d4af37]/50 text-[#f3dfb0] text-xs uppercase tracking-wider font-semibold transition-colors flex items-center gap-2"
+                >
+                  <Box className="w-4 h-4 text-[#d4af37]" />
+                  <span>{language === 'pt' ? 'Cavalo & Troféu 3D' : '3D Horse & Trophy'}</span>
+                </button>
               </div>
 
             </div>
@@ -208,13 +223,14 @@ export const CavaleiroExperience: React.FC<CavaleiroExperienceProps> = ({
                     alt="Mangalarga Marchador em movimento"
                     domainTheme="equestrian"
                     objectFit="contain"
+                    priority
                     className="w-full h-full max-h-full group-hover:scale-105 transition-transform duration-700 ease-out"
                   />
                 </div>
 
                 <div className="absolute inset-0 bg-gradient-to-t from-black/85 via-black/20 to-transparent pointer-events-none" />
 
-                <div className="absolute bottom-6 left-6 right-6 flex items-end justify-between">
+                <div className="absolute bottom-6 left-6 right-6 flex items-end justify-between photo-caption-overlay">
                   <div>
                     <span className="text-xs uppercase tracking-widest text-[#d4af37] font-serif-luxury">
                       {t.hero.photoTag}
@@ -577,7 +593,7 @@ export const CavaleiroExperience: React.FC<CavaleiroExperienceProps> = ({
                   />
                 </div>
                 <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent pointer-events-none" />
-                <div className="absolute bottom-6 left-6 right-6">
+                <div className="absolute bottom-6 left-6 right-6 photo-caption-overlay">
                   <span className="text-xs text-[#d4af37] font-serif-luxury uppercase tracking-wider">
                     {t.competicoesSection.cardTag}
                   </span>
@@ -602,8 +618,8 @@ export const CavaleiroExperience: React.FC<CavaleiroExperienceProps> = ({
 
       {/* Citações Criadoras & Filosofia de Seleção */}
       <section id="citacoes" className="py-20 border-b border-[#382618] relative overflow-hidden bg-gradient-to-b from-[#110c08] via-[#160f0a] to-[#110c08]">
-        {/* Subtle decorative background light */}
-        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[300px] bg-[#d4af37]/5 rounded-full blur-[120px] pointer-events-none" />
+        {/* Subtle decorative background light (zero-blur CSS radial gradient) */}
+        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[640px] h-[340px] bg-[radial-gradient(ellipse_at_center,rgba(212,175,55,0.08)_0%,transparent_70%)] pointer-events-none" />
 
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
           
@@ -757,26 +773,24 @@ export const CavaleiroExperience: React.FC<CavaleiroExperienceProps> = ({
                 <span>Adicionar Minha Foto</span>
               </button>
 
-              <div className="flex items-center gap-1 p-1 bg-[#1a120b] border border-[#3f2b1b] rounded-lg">
+              <div className="flex items-center gap-1 p-1 bg-[#1a120b] border border-[#3f2b1b] rounded-lg flex-wrap">
                 {categories.map((cat) => {
-                  const count = (cat === 'Todos' || cat === 'All')
+                  const count = cat.id === 'all'
                     ? gallery.length
-                    : cat === 'Competitions'
-                    ? gallery.filter((p) => p.category === 'Competições').length
-                    : gallery.filter((p) => p.category === cat).length;
+                    : gallery.filter((p) => p.category === cat.id).length;
                   return (
                     <button
-                      key={cat}
-                      onClick={() => setFilterCategory(cat)}
+                      key={cat.id}
+                      onClick={() => setFilterCategory(cat.id)}
                       className={`px-3 py-1.5 text-xs font-serif-luxury rounded-md transition-colors flex items-center gap-1.5 ${
-                        filterCategory === cat
+                        filterCategory === cat.id
                           ? 'bg-[#c59b27] text-black font-semibold shadow-sm'
                           : 'text-[#a38f7d] hover:text-white'
                       }`}
                     >
-                      <span>{cat}</span>
-                      <span className={`text-[10px] px-1.5 py-0.2 rounded-full ${
-                        filterCategory === cat ? 'bg-black/20 text-black font-bold' : 'bg-black/40 text-[#c7b9a7]'
+                      <span>{cat.label}</span>
+                      <span className={`text-[10px] px-1.5 py-0.5 rounded-full ${
+                        filterCategory === cat.id ? 'bg-black/20 text-black font-bold' : 'bg-black/40 text-[#c7b9a7]'
                       }`}>
                         {count}
                       </span>
@@ -901,22 +915,22 @@ export const CavaleiroExperience: React.FC<CavaleiroExperienceProps> = ({
           year={activePhoto.year}
           location={activePhoto.location}
           theme="equestrian"
-          currentIndex={filteredGallery.findIndex((p) => p.id === activePhoto.id)}
-          totalPhotos={filteredGallery.length}
-          hasNext={filteredGallery.length > 1}
-          hasPrev={filteredGallery.length > 1}
+          currentIndex={lightboxGallery.findIndex((p) => p.id === activePhoto.id)}
+          totalPhotos={lightboxGallery.length}
+          hasNext={lightboxGallery.length > 1}
+          hasPrev={lightboxGallery.length > 1}
           onNext={() => {
-            const idx = filteredGallery.findIndex((p) => p.id === activePhoto.id);
+            const idx = lightboxGallery.findIndex((p) => p.id === activePhoto.id);
             if (idx !== -1) {
-              const nextIdx = (idx + 1) % filteredGallery.length;
-              setActivePhoto(filteredGallery[nextIdx]);
+              const nextIdx = (idx + 1) % lightboxGallery.length;
+              setActivePhoto(lightboxGallery[nextIdx]);
             }
           }}
           onPrev={() => {
-            const idx = filteredGallery.findIndex((p) => p.id === activePhoto.id);
+            const idx = lightboxGallery.findIndex((p) => p.id === activePhoto.id);
             if (idx !== -1) {
-              const prevIdx = (idx - 1 + filteredGallery.length) % filteredGallery.length;
-              setActivePhoto(filteredGallery[prevIdx]);
+              const prevIdx = (idx - 1 + lightboxGallery.length) % lightboxGallery.length;
+              setActivePhoto(lightboxGallery[prevIdx]);
             }
           }}
         />
